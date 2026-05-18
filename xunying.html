@@ -95,6 +95,18 @@
             color: #ffefc8;
             box-shadow: 0 0 15px #e5b55e;
         }
+        .visitor-counter {
+            position: fixed;
+            bottom: 1.5rem;
+            left: 1.5rem;
+            z-index: 999;
+            color: #c9aa7a;
+            font-size: 0.8rem;
+            background: rgba(20,15,30,0.7);
+            padding: 0.4rem 1rem;
+            border-radius: 1.5rem;
+            border: 1px solid #6d5e4b;
+        }
         .main-container {
             width: 100%;
             max-width: 1000px;
@@ -747,10 +759,6 @@
 <div id="startScreen" class="start-screen">
     <div class="start-title">忘川风华录<br>寻英模拟器</div>
     <button class="start-btn" id="enterBtn">寻 英</button>
-<div style="position:fixed;bottom:1.5rem;left:1.5rem;z-index:999;color:#c9aa7a;font-size:0.8rem;background:rgba(20,15,30,0.7);padding:0.4rem 1rem;border-radius:1.5rem;border:1px solid #6d5e4b;">
-    访客 <span id="busuanzi_value_site_uv"></span> 人 | 浏览 <span id="busuanzi_value_site_pv"></span> 次
-</div>
-<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 </div>
 
 <div id="mainApp" class="main-container" style="display: none;">
@@ -877,10 +885,12 @@
 </div>
 
 <button class="bgm-toggle" id="bgmToggle">♪ 音乐</button>
+<div class="visitor-counter">
+    访客 <span id="busuanzi_value_site_uv"></span> 人 | 浏览 <span id="busuanzi_value_site_pv"></span> 次
+</div>
 
 <script>
     (function() {
-        // ========== BGM 系统 ==========
         const bgmToggle = document.getElementById('bgmToggle');
         const bgm = new Audio('https://fuxin330.github.io/Xunying/yuanbai.mp3');
         bgm.loop = true;
@@ -900,7 +910,6 @@
             bgmPlaying = !bgmPlaying;
         });
 
-        // 首次用户交互时尝试自动播放
         document.addEventListener('click', function autoPlayOnce() {
             if (!bgmPlaying) {
                 bgm.play().then(() => {
@@ -911,7 +920,6 @@
             }
         }, { once: true });
 
-        // ========== 音效系统 ==========
         let audioCtx = null;
         function getAudioCtx() {
             if (!audioCtx) {
@@ -1103,25 +1111,12 @@
         }
 
         function setupSearchable(input, dropdown, getOptions, onSelect) {
-            input.addEventListener('focus', () => {
-                const options = getOptions();
-                filterDropdown(input, dropdown, options);
-                dropdown.classList.add('open');
-            });
-            input.addEventListener('input', () => {
-                const options = getOptions();
-                filterDropdown(input, dropdown, options);
-                dropdown.classList.add('open');
-            });
+            input.addEventListener('focus', () => { const options = getOptions(); filterDropdown(input, dropdown, options); dropdown.classList.add('open'); });
+            input.addEventListener('input', () => { const options = getOptions(); filterDropdown(input, dropdown, options); dropdown.classList.add('open'); });
             input.addEventListener('blur', () => { setTimeout(() => dropdown.classList.remove('open'), 150); });
             dropdown.addEventListener('mousedown', (e) => {
                 const item = e.target.closest('.dropdown-item');
-                if (item) {
-                    input.value = item.textContent;
-                    dropdown.classList.remove('open');
-                    if (onSelect) onSelect(item.textContent);
-                    playClickSound();
-                }
+                if (item) { input.value = item.textContent; dropdown.classList.remove('open'); if (onSelect) onSelect(item.textContent); playClickSound(); }
             });
         }
 
@@ -1136,706 +1131,104 @@
         setupSearchable(tianSearchInput, tianDropdown, () => tianUpOptions, (val) => { state.tianUp.tian = val; });
         setupSearchable(tianDiSearchInput, tianDiDropdown, () => diUpOptions, (val) => { state.tianUp.di = val; });
         setupSearchable(diUpSearchInput, diUpDropdown, () => diUpOptions, (val) => { state.diUp.name = val; });
-        setupSearchable(spiritNameSearchInput, spiritNameDropdown, () => allNames, (val) => {
-            state.spiritUp.name = val;
-            state.spiritUp.group = groupA.has(val) ? 'A' : 'B';
-            spiritItemSearchInput.value = '';
-            state.spiritUp.item = '';
-        });
+        setupSearchable(spiritNameSearchInput, spiritNameDropdown, () => allNames, (val) => { state.spiritUp.name = val; state.spiritUp.group = groupA.has(val) ? 'A' : 'B'; spiritItemSearchInput.value = ''; state.spiritUp.item = ''; });
         setupSearchable(spiritItemSearchInput, spiritItemDropdown, () => [...jueA, ...jueB], (val) => { state.spiritUp.item = val; });
 
-        function showToast(text) {
-            const old = document.querySelector('.toast-message');
-            if (old) old.remove();
-            const t = document.createElement('div');
-            t.className = 'toast-message';
-            t.textContent = text;
-            document.body.appendChild(t);
-            setTimeout(() => t.remove(), 2000);
-        }
-
-        function getPity() {
-            if (state.currentPool === 'custom') return state.tianPity;
-            if (state.currentPool === 'diCustom') return state.diCustomPity;
-            if (state.currentPool === 'advanced') return state.advancedPity;
-            if (state.currentPool === 'normal') return state.normalPity;
-            if (state.currentPool === 'spirit') return state.spiritPity;
-            return null;
-        }
-
-        function getTianProbability(pity) {
-            const c = pity.counter;
-            if (c < 50) return 0.02;
-            if (c < 60) return 0.02 + (c - 49) * 0.02;
-            if (c < 70) return 0.22 + (c - 59) * 0.03;
-            if (c < 80) return 0.37 + (c - 69) * 0.05;
-            return 1.0;
-        }
-
-        function addRecord(pool, result) {
-            state.records[pool].unshift(result);
-            if (state.records[pool].length > 80) state.records[pool].pop();
-        }
-
-        function updatePoolButtons() {
-            btnCustom.textContent = '天品自选';
-            btnDiCustom.textContent = '地品自选';
-            if (state.tianUpHasBeenSet) btnCustom.textContent = state.tianUp.poolName;
-            if (state.diUpHasBeenSet) btnDiCustom.textContent = state.diUp.poolName;
-        }
+        function showToast(text) { const old = document.querySelector('.toast-message'); if (old) old.remove(); const t = document.createElement('div'); t.className = 'toast-message'; t.textContent = text; document.body.appendChild(t); setTimeout(() => t.remove(), 2000); }
+        function getPity() { if (state.currentPool === 'custom') return state.tianPity; if (state.currentPool === 'diCustom') return state.diCustomPity; if (state.currentPool === 'advanced') return state.advancedPity; if (state.currentPool === 'normal') return state.normalPity; if (state.currentPool === 'spirit') return state.spiritPity; return null; }
+        function getTianProbability(pity) { const c = pity.counter; if (c < 50) return 0.02; if (c < 60) return 0.02 + (c - 49) * 0.02; if (c < 70) return 0.22 + (c - 59) * 0.03; if (c < 80) return 0.37 + (c - 69) * 0.05; return 1.0; }
+        function addRecord(pool, result) { state.records[pool].unshift(result); if (state.records[pool].length > 80) state.records[pool].pop(); }
+        function updatePoolButtons() { btnCustom.textContent = '天品自选'; btnDiCustom.textContent = '地品自选'; if (state.tianUpHasBeenSet) btnCustom.textContent = state.tianUp.poolName; if (state.diUpHasBeenSet) btnDiCustom.textContent = state.diUp.poolName; }
 
         function checkAchievements(results, isTenDraw) {
             const triggered = [];
             if (isTenDraw && results.length === 10) {
                 const diCount = results.filter(c => c.rarity === 'di').length;
                 const tianCount = results.filter(c => c.rarity === 'tian').length;
-                for (const ach of achievementsDi) {
-                    if (diCount >= ach.min && !state.earnedA[ach.id]) {
-                        state.earnedA[ach.id] = true;
-                        triggered.push(ach.name);
-                        break;
-                    }
-                }
-                for (const ach of achievementsTian) {
-                    if (tianCount >= ach.min && !state.earnedA[ach.id]) {
-                        state.earnedA[ach.id] = true;
-                        triggered.push(ach.name);
-                        break;
-                    }
-                }
+                for (const ach of achievementsDi) { if (diCount >= ach.min && !state.earnedA[ach.id]) { state.earnedA[ach.id] = true; triggered.push(ach.name); break; } }
+                for (const ach of achievementsTian) { if (tianCount >= ach.min && !state.earnedA[ach.id]) { state.earnedA[ach.id] = true; triggered.push(ach.name); break; } }
             }
-            if (!state.earnedA[achievementA9.id] && state.noTianStreak >= 60) {
-                state.earnedA[achievementA9.id] = true;
-                triggered.push(achievementA9.name);
-            }
-            if (state.noTianStreak >= 60) {
-                state.noTianStreakCount++;
-                state.noTianStreak = 0;
-                for (const ach of achievementsB) {
-                    if (state.noTianStreakCount >= ach.target && state.earnedB[ach.id] < ach.target) {
-                        state.earnedB[ach.id] = ach.target;
-                        triggered.push(ach.name);
-                    }
-                }
-            }
+            if (!state.earnedA[achievementA9.id] && state.noTianStreak >= 60) { state.earnedA[achievementA9.id] = true; triggered.push(achievementA9.name); }
+            if (state.noTianStreak >= 60) { state.noTianStreakCount++; state.noTianStreak = 0; for (const ach of achievementsB) { if (state.noTianStreakCount >= ach.target && state.earnedB[ach.id] < ach.target) { state.earnedB[ach.id] = ach.target; triggered.push(ach.name); } } }
             return triggered;
         }
 
-        function updateNoTianStreak(hasTian) {
-            if (hasTian) {
-                if (state.noTianStreak >= 60) state.noTianStreakCount++;
-                state.noTianStreak = 0;
-            } else {
-                state.noTianStreak++;
-            }
-            for (const ach of achievementsB) {
-                if (state.noTianStreakCount >= ach.target && state.earnedB[ach.id] < ach.target) {
-                    state.earnedB[ach.id] = ach.target;
-                }
-            }
-        }
+        function updateNoTianStreak(hasTian) { if (hasTian) { if (state.noTianStreak >= 60) state.noTianStreakCount++; state.noTianStreak = 0; } else { state.noTianStreak++; } for (const ach of achievementsB) { if (state.noTianStreakCount >= ach.target && state.earnedB[ach.id] < ach.target) { state.earnedB[ach.id] = ach.target; } } }
 
         function refreshUI() {
             poolButtons.forEach(b => b.classList.toggle('active', b.dataset.pool === state.currentPool));
-
-            if (state.currentPool === 'custom') {
-                poolTitle.textContent = state.tianUp.poolName;
-            } else if (state.currentPool === 'diCustom') {
-                poolTitle.textContent = state.diUp.poolName;
-            } else if (state.currentPool === 'achievement') {
-                poolTitle.textContent = '成就';
-            } else {
-                const names = { advanced: '高级卡池', normal: '普通卡池', spirit: '引灵' };
-                poolTitle.textContent = names[state.currentPool] || '';
-            }
-
+            if (state.currentPool === 'custom') { poolTitle.textContent = state.tianUp.poolName; } else if (state.currentPool === 'diCustom') { poolTitle.textContent = state.diUp.poolName; } else if (state.currentPool === 'achievement') { poolTitle.textContent = '成就'; } else { const names = { advanced: '高级卡池', normal: '普通卡池', spirit: '引灵' }; poolTitle.textContent = names[state.currentPool] || ''; }
             updatePoolButtons();
-
-            const isAchievement = state.currentPool === 'achievement';
-            const isTian = state.currentPool === 'custom';
-            const isDi = state.currentPool === 'diCustom';
-            endPoolBtn.style.display = (isTian || isDi) ? 'inline-block' : 'none';
-            recordBtn.style.display = isAchievement ? 'none' : 'inline-block';
-            tianUpSetArea.style.display = (isTian && !state.tianUpHasBeenSet) ? 'flex' : 'none';
-            diUpSetArea.style.display = (isDi && !state.diUpHasBeenSet) ? 'flex' : 'none';
-            spiritUpArea.style.display = state.currentPool === 'spirit' ? 'flex' : 'none';
-            normalDrawCountArea.style.display = state.currentPool === 'normal' ? 'flex' : 'none';
-            directResultArea.style.display = (state.currentPool === 'normal' || state.currentPool === 'spirit') ? 'flex' : 'none';
-            achievementNotification.style.display = 'none';
-            if (state.currentPool === 'achievement') {
-                directResultArea.style.display = 'flex';
-                renderAchievementPanel();
-            }
-
-            if (!isAchievement && state.currentPool !== 'spirit') {
-                const draws = state.totalDraws[state.currentPool] || 0;
-                totalDrawsText.textContent = '已抽' + draws + '抽';
-                totalDrawsText.style.display = 'block';
-            } else if (state.currentPool === 'spirit') {
-                const draws = state.totalDraws['spirit'] || 0;
-                totalDrawsText.textContent = '已抽' + draws + '抽';
-                totalDrawsText.style.display = 'block';
-            } else {
-                totalDrawsText.style.display = 'none';
-            }
-
-            upLine1.style.display = 'none';
-            upLine2.style.display = 'none';
-            diUpPityLine.style.display = 'none';
-
-            if (isTian && state.tianUpHasBeenSet) {
-                const a = 3 - state.tianPity.tianCount;
-                upLine1.textContent = '天品名士' + state.tianUp.tian + '、地品名士' + state.tianUp.di + '出现概率提升！';
-                upLine2.textContent = '此卡池再抽' + a + '张天卡必得天品名士' + state.tianUp.tian + '！';
-                upLine1.style.display = 'block';
-                upLine2.style.display = 'block';
-            }
-            if (isDi && state.diUpHasBeenSet) {
-                upLine1.textContent = '地品名士' + state.diUp.name + '出现概率提升！';
-                upLine1.style.display = 'block';
-                const diRemain = 30 - state.diCustomPity.diUpCount;
-                diUpPityLine.textContent = '再抽' + diRemain + '抽必得地卡' + state.diUp.name;
-                diUpPityLine.style.display = 'block';
-            }
-
-            tianPityText.style.display = 'none';
-            diPityText.style.display = 'none';
-            spiritPityText.style.display = 'none';
-            probabilityBoostDiv.style.display = 'none';
-
-            if (!isAchievement) {
-                const pity = getPity();
-                if (state.currentPool === 'custom' || state.currentPool === 'diCustom' || state.currentPool === 'advanced') {
-                    const diRemain = 10 - (pity ? pity.forDi : 0);
-                    diPityText.textContent = '再抽' + diRemain + '次必得地品以上名士';
-                    diPityText.style.display = 'block';
-                    if (pity && pity.counter >= 51) {
-                        const tianRemain = 80 - pity.counter;
-                        tianPityText.textContent = '再抽' + tianRemain + '次必得天品名士';
-                        tianPityText.style.display = 'block';
-                        probabilityBoostDiv.style.display = 'block';
-                    }
-                } else if (state.currentPool === 'normal') {
-                    diPityText.textContent = '再抽' + (10 - state.normalPity.forXuan) + '次必得玄卡以上名士';
-                    diPityText.style.display = 'block';
-                } else if (state.currentPool === 'spirit') {
-                    spiritPityText.textContent = '再抽' + (40 - state.spiritPity.counter) + '次必得绝品九世灵';
-                    spiritPityText.style.display = 'block';
-                }
-            }
-
-            if (state.currentPool === 'spirit') {
-                singleDrawBtn.textContent = '一次';
-                tenDrawBtn.textContent = '十次';
-                singleDrawBtn.style.display = 'inline-block';
-                tenDrawBtn.style.display = 'inline-block';
-            } else if (state.currentPool === 'normal') {
-                singleDrawBtn.style.display = 'none';
-                tenDrawBtn.textContent = '寻英';
-                tenDrawBtn.style.display = 'inline-block';
-            } else if (isAchievement) {
-                singleDrawBtn.style.display = 'none';
-                tenDrawBtn.style.display = 'none';
-            } else {
-                singleDrawBtn.textContent = '单次寻英';
-                tenDrawBtn.textContent = '十连寻英';
-                singleDrawBtn.style.display = 'inline-block';
-                tenDrawBtn.style.display = 'inline-block';
-            }
+            const isAchievement = state.currentPool === 'achievement'; const isTian = state.currentPool === 'custom'; const isDi = state.currentPool === 'diCustom';
+            endPoolBtn.style.display = (isTian || isDi) ? 'inline-block' : 'none'; recordBtn.style.display = isAchievement ? 'none' : 'inline-block';
+            tianUpSetArea.style.display = (isTian && !state.tianUpHasBeenSet) ? 'flex' : 'none'; diUpSetArea.style.display = (isDi && !state.diUpHasBeenSet) ? 'flex' : 'none';
+            spiritUpArea.style.display = state.currentPool === 'spirit' ? 'flex' : 'none'; normalDrawCountArea.style.display = state.currentPool === 'normal' ? 'flex' : 'none';
+            directResultArea.style.display = (state.currentPool === 'normal' || state.currentPool === 'spirit') ? 'flex' : 'none'; achievementNotification.style.display = 'none';
+            if (state.currentPool === 'achievement') { directResultArea.style.display = 'flex'; renderAchievementPanel(); }
+            if (!isAchievement && state.currentPool !== 'spirit') { totalDrawsText.textContent = '已抽' + (state.totalDraws[state.currentPool] || 0) + '抽'; totalDrawsText.style.display = 'block'; } else if (state.currentPool === 'spirit') { totalDrawsText.textContent = '已抽' + (state.totalDraws['spirit'] || 0) + '抽'; totalDrawsText.style.display = 'block'; } else { totalDrawsText.style.display = 'none'; }
+            upLine1.style.display = 'none'; upLine2.style.display = 'none'; diUpPityLine.style.display = 'none';
+            if (isTian && state.tianUpHasBeenSet) { const a = 3 - state.tianPity.tianCount; upLine1.textContent = '天品名士' + state.tianUp.tian + '、地品名士' + state.tianUp.di + '出现概率提升！'; upLine2.textContent = '此卡池再抽' + a + '张天卡必得天品名士' + state.tianUp.tian + '！'; upLine1.style.display = 'block'; upLine2.style.display = 'block'; }
+            if (isDi && state.diUpHasBeenSet) { upLine1.textContent = '地品名士' + state.diUp.name + '出现概率提升！'; upLine1.style.display = 'block'; const diRemain = 30 - state.diCustomPity.diUpCount; diUpPityLine.textContent = '再抽' + diRemain + '抽必得地卡' + state.diUp.name; diUpPityLine.style.display = 'block'; }
+            tianPityText.style.display = 'none'; diPityText.style.display = 'none'; spiritPityText.style.display = 'none'; probabilityBoostDiv.style.display = 'none';
+            if (!isAchievement) { const pity = getPity(); if (state.currentPool === 'custom' || state.currentPool === 'diCustom' || state.currentPool === 'advanced') { diPityText.textContent = '再抽' + (10 - (pity ? pity.forDi : 0)) + '次必得地品以上名士'; diPityText.style.display = 'block'; if (pity && pity.counter >= 51) { tianPityText.textContent = '再抽' + (80 - pity.counter) + '次必得天品名士'; tianPityText.style.display = 'block'; probabilityBoostDiv.style.display = 'block'; } } else if (state.currentPool === 'normal') { diPityText.textContent = '再抽' + (10 - state.normalPity.forXuan) + '次必得玄卡以上名士'; diPityText.style.display = 'block'; } else if (state.currentPool === 'spirit') { spiritPityText.textContent = '再抽' + (40 - state.spiritPity.counter) + '次必得绝品九世灵'; spiritPityText.style.display = 'block'; } }
+            if (state.currentPool === 'spirit') { singleDrawBtn.textContent = '一次'; tenDrawBtn.textContent = '十次'; singleDrawBtn.style.display = 'inline-block'; tenDrawBtn.style.display = 'inline-block'; } else if (state.currentPool === 'normal') { singleDrawBtn.style.display = 'none'; tenDrawBtn.textContent = '寻英'; tenDrawBtn.style.display = 'inline-block'; } else if (isAchievement) { singleDrawBtn.style.display = 'none'; tenDrawBtn.style.display = 'none'; } else { singleDrawBtn.textContent = '单次寻英'; tenDrawBtn.textContent = '十连寻英'; singleDrawBtn.style.display = 'inline-block'; tenDrawBtn.style.display = 'inline-block'; }
         }
 
-        function renderAchievementPanel() {
-            const allAch = [
-                ...achievementsDi.map(a => ({ ...a, type: 'di' })),
-                ...achievementsTian.map(a => ({ ...a, type: 'tian' })),
-                { ...achievementA9, type: 'a9' },
-                { ...achievementHua, type: 'a10' },
-                ...achievementsB.map(b => ({ ...b, type: 'b' }))
-            ];
-            achievementListAll.innerHTML = allAch.map(a => {
-                if (a.type === 'b') {
-                    const count = state.earnedB[a.id] || 0;
-                    const earned = count >= a.target;
-                    return '<div class="achievement-item' + (earned ? ' earned' : '') + '"><span class="name">' + a.name + '</span><span class="progress">' + count + '/' + a.target + '</span></div>';
-                } else {
-                    const earned = state.earnedA[a.id];
-                    return '<div class="achievement-item' + (earned ? ' earned' : '') + '"><span class="name">' + a.name + '</span><span class="progress">' + (earned ? '已获得' : '未获得') + '</span></div>';
-                }
-            }).join('');
-        }
+        function renderAchievementPanel() { const allAch = [...achievementsDi.map(a => ({ ...a, type: 'di' })), ...achievementsTian.map(a => ({ ...a, type: 'tian' })), { ...achievementA9, type: 'a9' }, { ...achievementHua, type: 'a10' }, ...achievementsB.map(b => ({ ...b, type: 'b' }))]; achievementListAll.innerHTML = allAch.map(a => { if (a.type === 'b') { const count = state.earnedB[a.id] || 0; const earned = count >= a.target; return '<div class="achievement-item' + (earned ? ' earned' : '') + '"><span class="name">' + a.name + '</span><span class="progress">' + count + '/' + a.target + '</span></div>'; } else { const earned = state.earnedA[a.id]; return '<div class="achievement-item' + (earned ? ' earned' : '') + '"><span class="name">' + a.name + '</span><span class="progress">' + (earned ? '已获得' : '未获得') + '</span></div>'; } }).join(''); }
+        function pickRandom(arr) { return arr[Math.floor(random() * arr.length)]; }
 
-        function pickRandom(arr) {
-            return arr[Math.floor(random() * arr.length)];
-        }
-
-        function drawCustomOrAdvanced() {
-            const pity = getPity();
-            if (pity.forDi >= 9) {
-                pity.forDi = 0;
-                pity.counter++;
-                return generateDiCard();
-            }
-            const tianProb = getTianProbability(pity);
-            const r = random();
-            if (r < tianProb) {
-                pity.counter = 0;
-                pity.forDi++;
-                return generateTianCard();
-            } else if (r < tianProb + 0.15) {
-                pity.counter++;
-                pity.forDi = 0;
-                return generateDiCard();
-            } else {
-                pity.counter++;
-                pity.forDi++;
-                const name = pickRandom(xuanCards);
-                return { rarity: 'xuan', name: name, displayName: name };
-            }
-        }
-
-        function drawDiCustom() {
-            const pity = state.diCustomPity;
-            pity.diUpCount++;
-            if (pity.diUpCount >= 30) {
-                pity.diUpCount = 0;
-                pity.counter++;
-                if (pity.forDi >= 9) { pity.forDi = 0; } else { pity.forDi++; }
-                return { rarity: 'di', name: state.diUp.name, displayName: '???' };
-            }
-            if (pity.forDi >= 9) {
-                pity.forDi = 0;
-                pity.counter++;
-                const card = generateDiCard();
-                if (card.name === state.diUp.name) { pity.diUpCount = 0; }
-                return card;
-            }
-            const tianProb = getTianProbability(pity);
-            const r = random();
-            if (r < tianProb) {
-                pity.counter = 0;
-                pity.forDi++;
-                return generateTianCard();
-            } else if (r < tianProb + 0.15) {
-                pity.counter++;
-                pity.forDi = 0;
-                const card = generateDiCard();
-                if (card.name === state.diUp.name) { pity.diUpCount = 0; }
-                return card;
-            } else {
-                pity.counter++;
-                pity.forDi++;
-                const name = pickRandom(xuanCards);
-                return { rarity: 'xuan', name: name, displayName: name };
-            }
-        }
-
-        function drawNormal() {
-            const pity = state.normalPity;
-            if (pity.forXuan >= 9) {
-                pity.forXuan = 0;
-                if (random() < 0.02 / 0.22) {
-                    const name = pickRandom(diCards);
-                    return { rarity: 'di', name: name, displayName: '???' };
-                } else {
-                    const name = pickRandom(xuanCards);
-                    return { rarity: 'xuan', name: name, displayName: name };
-                }
-            }
-            const r = random();
-            if (r < 0.02) {
-                pity.forXuan = 0;
-                const name = pickRandom(diCards);
-                return { rarity: 'di', name: name, displayName: '???' };
-            } else if (r < 0.22) {
-                pity.forXuan = 0;
-                const name = pickRandom(xuanCards);
-                return { rarity: 'xuan', name: name, displayName: name };
-            } else {
-                pity.forXuan++;
-                const name = pickRandom(huangCards);
-                return { rarity: 'huang', name: name, displayName: name };
-            }
-        }
-
-        function drawSpirit() {
-            const pity = state.spiritPity;
-            if (pity.counter >= 39) {
-                pity.counter = 0;
-                return generateJueSpirit();
-            }
-            const r = random();
-            if (r < 0.05) {
-                pity.counter = 0;
-                return generateJueSpirit();
-            } else if (r < 0.35) {
-                pity.counter++;
-                const name = pickRandom(getJiSpirits());
-                return { rarity: 'ji', name: name, displayName: name };
-            } else if (r < 0.65) {
-                pity.counter++;
-                const name = pickRandom(getZhenSpirits());
-                return { rarity: 'zhen', name: name, displayName: name };
-            } else {
-                pity.counter++;
-                const name = pickRandom(getJiaSpirits());
-                return { rarity: 'jia', name: name, displayName: name };
-            }
-        }
-
-        function generateJueSpirit() {
-            const allJue = [...jueA, ...jueB];
-            const hasItemUp = state.spiritUp.item !== '' && random() < 0.5;
-            let itemName;
-            if (hasItemUp) {
-                itemName = state.spiritUp.item;
-            } else {
-                itemName = pickRandom(allJue);
-            }
-            const isUpName = state.spiritUp.name !== '' && random() < 0.5;
-            let exclusiveName;
-            if (isUpName) {
-                exclusiveName = state.spiritUp.name;
-            } else {
-                const groupNames = allNames.filter(n => state.spiritUp.group === 'A' ? groupA.has(n) : !groupA.has(n));
-                exclusiveName = pickRandom(groupNames.length > 0 ? groupNames : allNames);
-            }
-            return { rarity: 'jue', name: itemName, displayName: itemName, exclusive: exclusiveName + '专属' };
-        }
-
-        function generateTianCard() {
-            if (state.currentPool === 'custom') {
-                const pity = state.tianPity;
-                pity.tianCount++;
-                let card;
-                if (pity.tianCount >= 3) {
-                    card = { rarity: 'tian', name: state.tianUp.tian, displayName: '???' };
-                    pity.tianCount = 0;
-                } else if (random() < 0.3) {
-                    card = { rarity: 'tian', name: state.tianUp.tian, displayName: '???' };
-                } else {
-                    const name = pickRandom(tianCards.filter(n => n !== state.tianUp.tian));
-                    card = { rarity: 'tian', name: name, displayName: '???' };
-                }
-                if (card.name === state.tianUp.tian) { pity.tianCount = 0; }
-                return card;
-            }
-            const name = pickRandom(tianCards);
-            return { rarity: 'tian', name: name, displayName: '???' };
-        }
-
-        function generateDiCard() {
-            if (state.currentPool === 'custom') {
-                if (random() < 0.3) return { rarity: 'di', name: state.tianUp.di, displayName: '???' };
-                return { rarity: 'di', name: pickRandom(diCards), displayName: '???' };
-            }
-            if (state.currentPool === 'diCustom') {
-                if (random() < 0.3) return { rarity: 'di', name: state.diUp.name, displayName: '???' };
-                return { rarity: 'di', name: pickRandom(diCards), displayName: '???' };
-            }
-            return { rarity: 'di', name: pickRandom(diCards), displayName: '???' };
-        }
+        function drawCustomOrAdvanced() { const pity = getPity(); if (pity.forDi >= 9) { pity.forDi = 0; pity.counter++; return generateDiCard(); } const tianProb = getTianProbability(pity); const r = random(); if (r < tianProb) { pity.counter = 0; pity.forDi++; return generateTianCard(); } else if (r < tianProb + 0.15) { pity.counter++; pity.forDi = 0; return generateDiCard(); } else { pity.counter++; pity.forDi++; const name = pickRandom(xuanCards); return { rarity: 'xuan', name: name, displayName: name }; } }
+        function drawDiCustom() { const pity = state.diCustomPity; pity.diUpCount++; if (pity.diUpCount >= 30) { pity.diUpCount = 0; pity.counter++; if (pity.forDi >= 9) { pity.forDi = 0; } else { pity.forDi++; } return { rarity: 'di', name: state.diUp.name, displayName: '???' }; } if (pity.forDi >= 9) { pity.forDi = 0; pity.counter++; const card = generateDiCard(); if (card.name === state.diUp.name) { pity.diUpCount = 0; } return card; } const tianProb = getTianProbability(pity); const r = random(); if (r < tianProb) { pity.counter = 0; pity.forDi++; return generateTianCard(); } else if (r < tianProb + 0.15) { pity.counter++; pity.forDi = 0; const card = generateDiCard(); if (card.name === state.diUp.name) { pity.diUpCount = 0; } return card; } else { pity.counter++; pity.forDi++; const name = pickRandom(xuanCards); return { rarity: 'xuan', name: name, displayName: name }; } }
+        function drawNormal() { const pity = state.normalPity; if (pity.forXuan >= 9) { pity.forXuan = 0; if (random() < 0.02 / 0.22) { const name = pickRandom(diCards); return { rarity: 'di', name: name, displayName: '???' }; } else { const name = pickRandom(xuanCards); return { rarity: 'xuan', name: name, displayName: name }; } } const r = random(); if (r < 0.02) { pity.forXuan = 0; const name = pickRandom(diCards); return { rarity: 'di', name: name, displayName: '???' }; } else if (r < 0.22) { pity.forXuan = 0; const name = pickRandom(xuanCards); return { rarity: 'xuan', name: name, displayName: name }; } else { pity.forXuan++; const name = pickRandom(huangCards); return { rarity: 'huang', name: name, displayName: name }; } }
+        function drawSpirit() { const pity = state.spiritPity; if (pity.counter >= 39) { pity.counter = 0; return generateJueSpirit(); } const r = random(); if (r < 0.05) { pity.counter = 0; return generateJueSpirit(); } else if (r < 0.35) { pity.counter++; const name = pickRandom(getJiSpirits()); return { rarity: 'ji', name: name, displayName: name }; } else if (r < 0.65) { pity.counter++; const name = pickRandom(getZhenSpirits()); return { rarity: 'zhen', name: name, displayName: name }; } else { pity.counter++; const name = pickRandom(getJiaSpirits()); return { rarity: 'jia', name: name, displayName: name }; } }
+        function generateJueSpirit() { const allJue = [...jueA, ...jueB]; const hasItemUp = state.spiritUp.item !== '' && random() < 0.5; let itemName; if (hasItemUp) { itemName = state.spiritUp.item; } else { itemName = pickRandom(allJue); } const isUpName = state.spiritUp.name !== '' && random() < 0.5; let exclusiveName; if (isUpName) { exclusiveName = state.spiritUp.name; } else { const groupNames = allNames.filter(n => state.spiritUp.group === 'A' ? groupA.has(n) : !groupA.has(n)); exclusiveName = pickRandom(groupNames.length > 0 ? groupNames : allNames); } return { rarity: 'jue', name: itemName, displayName: itemName, exclusive: exclusiveName + '专属' }; }
+        function generateTianCard() { if (state.currentPool === 'custom') { const pity = state.tianPity; pity.tianCount++; let card; if (pity.tianCount >= 3) { card = { rarity: 'tian', name: state.tianUp.tian, displayName: '???' }; pity.tianCount = 0; } else if (random() < 0.3) { card = { rarity: 'tian', name: state.tianUp.tian, displayName: '???' }; } else { const name = pickRandom(tianCards.filter(n => n !== state.tianUp.tian)); card = { rarity: 'tian', name: name, displayName: '???' }; } if (card.name === state.tianUp.tian) { pity.tianCount = 0; } return card; } const name = pickRandom(tianCards); return { rarity: 'tian', name: name, displayName: '???' }; }
+        function generateDiCard() { if (state.currentPool === 'custom') { if (random() < 0.3) return { rarity: 'di', name: state.tianUp.di, displayName: '???' }; return { rarity: 'di', name: pickRandom(diCards), displayName: '???' }; } if (state.currentPool === 'diCustom') { if (random() < 0.3) return { rarity: 'di', name: state.diUp.name, displayName: '???' }; return { rarity: 'di', name: pickRandom(diCards), displayName: '???' }; } return { rarity: 'di', name: pickRandom(diCards), displayName: '???' }; }
 
         function performDraw(times, reuseCat) {
             if (state.currentPool === 'achievement') return;
-            if (state.currentPool === 'spirit') {
-                if (!state.spiritUp.name) { showToast('请先选择专属名士'); return; }
-                const results = [];
-                for (let i = 0; i < times; i++) results.push(drawSpirit());
-                state.totalDraws['spirit'] += times;
-                displayDirectResults(results, 'spirit');
-                refreshUI();
-                return;
-            }
-            if (state.currentPool === 'normal') {
-                const rawCount = parseInt(normalDrawCountInput.value);
-                if (isNaN(rawCount) || rawCount < 1 || rawCount > 10) { showToast('请输入1-10之间的数字'); return; }
-                const count = Math.max(1, Math.min(10, rawCount));
-                const results = [];
-                for (let i = 0; i < count; i++) {
-                    const card = drawNormal();
-                    results.push(card);
-                    addRecord('normal', card.displayName === '???' ? card.name : card.displayName);
-                    updateNoTianStreak(card.rarity === 'tian');
-                }
-                state.totalDraws['normal'] += count;
-                const triggered = checkAchievements(results, count === 10);
-                displayDirectResults(results, 'normal', triggered);
-                refreshUI();
-                return;
-            }
+            if (state.currentPool === 'spirit') { if (!state.spiritUp.name) { showToast('请先选择专属名士'); return; } const results = []; for (let i = 0; i < times; i++) results.push(drawSpirit()); state.totalDraws['spirit'] += times; displayDirectResults(results, 'spirit'); refreshUI(); return; }
+            if (state.currentPool === 'normal') { const rawCount = parseInt(normalDrawCountInput.value); if (isNaN(rawCount) || rawCount < 1 || rawCount > 10) { showToast('请输入1-10之间的数字'); return; } const count = Math.max(1, Math.min(10, rawCount)); const results = []; for (let i = 0; i < count; i++) { const card = drawNormal(); results.push(card); addRecord('normal', card.displayName === '???' ? card.name : card.displayName); updateNoTianStreak(card.rarity === 'tian'); } state.totalDraws['normal'] += count; const triggered = checkAchievements(results, count === 10); displayDirectResults(results, 'normal', triggered); refreshUI(); return; }
             if (state.currentPool === 'custom' && !state.tianUpHasBeenSet) { showToast('请先在天品自选中设定UP名士'); return; }
             if (state.currentPool === 'diCustom' && !state.diUpHasBeenSet) { showToast('请先在地品自选中设定UP名士'); return; }
-
-            const results = [];
-            const poolKey = state.currentPool === 'diCustom' ? 'diCustom' : (state.currentPool === 'custom' ? 'custom' : 'advanced');
-            for (let i = 0; i < times; i++) {
-                let card;
-                if (state.currentPool === 'diCustom') { card = drawDiCustom(); }
-                else { card = drawCustomOrAdvanced(); }
-                results.push(card);
-                addRecord(poolKey, card.displayName === '???' ? card.name : card.displayName);
-                updateNoTianStreak(card.rarity === 'tian');
-            }
-            state.totalDraws[poolKey] += times;
-
-            state.pendingDrawResults = results;
-            state.pendingDrawCount = times;
-            state.pendingPool = state.currentPool;
-            const triggered = checkAchievements(results, times === 10);
-            state.currentDrawAchievements = triggered;
-            if (!reuseCat) {
-                state.pendingCatName = catTypes[Math.floor(random() * catTypes.length)];
-            }
+            const results = []; const poolKey = state.currentPool === 'diCustom' ? 'diCustom' : (state.currentPool === 'custom' ? 'custom' : 'advanced');
+            for (let i = 0; i < times; i++) { let card; if (state.currentPool === 'diCustom') { card = drawDiCustom(); } else { card = drawCustomOrAdvanced(); } results.push(card); addRecord(poolKey, card.displayName === '???' ? card.name : card.displayName); updateNoTianStreak(card.rarity === 'tian'); }
+            state.totalDraws[poolKey] += times; state.pendingDrawResults = results; state.pendingDrawCount = times; state.pendingPool = state.currentPool;
+            const triggered = checkAchievements(results, times === 10); state.currentDrawAchievements = triggered;
+            if (!reuseCat) { state.pendingCatName = catTypes[Math.floor(random() * catTypes.length)]; }
             openCatOverlay(results, times, triggered, reuseCat);
         }
 
         function displayDirectResults(results, poolType, triggeredAchievements) {
-            directResultArea.innerHTML = results.map((card, idx) => {
-                let cls = 'result-item';
-                if (poolType === 'spirit') {
-                    cls += ' ' + card.rarity;
-                    let html = '<span class="' + cls + '">' + card.displayName + '</span>';
-                    if (card.rarity === 'jue' && card.exclusive) html += '<span class="exclusive-info">（查看专属）</span>';
-                    return '<div style="display:flex;flex-direction:column;align-items:center;">' + html + '</div>';
-                } else {
-                    if (card.displayName === '???') {
-                        if (card.rarity === 'tian') cls += ' tian-hidden';
-                        else cls += ' di-hidden';
-                        return '<span class="' + cls + '" data-idx="' + idx + '">???</span>';
-                    } else if (card.rarity === 'xuan') { cls += ' xuan'; return '<span class="' + cls + '">' + card.name + '</span>'; }
-                    else { cls += ' huang'; return '<span class="' + cls + '">' + card.name + '</span>'; }
-                }
-            }).join('');
-
-            if (triggeredAchievements && triggeredAchievements.length > 0) {
-                achievementNotification.textContent = '获得成就：' + triggeredAchievements.join('、');
-                achievementNotification.style.display = 'block';
-            } else {
-                achievementNotification.style.display = 'none';
-            }
-
-            if (poolType === 'spirit') {
-                directResultArea.querySelectorAll('.result-item.jue').forEach((el, idx2) => {
-                    const jueCards = results.filter(c => c.rarity === 'jue');
-                    const card = jueCards[idx2];
-                    if (card && card.exclusive) {
-                        el.addEventListener('click', () => {
-                            playClickSound();
-                            showToast(card.exclusive);
-                        });
-                        el.style.cursor = 'pointer';
-                    }
-                });
-            } else {
-                directResultArea.querySelectorAll('.result-item.tian-hidden, .result-item.di-hidden').forEach(el => {
-                    el.addEventListener('click', function() {
-                        playClickSound();
-                        const i = parseInt(this.dataset.idx);
-                        const card = results[i];
-                        this.textContent = card.name;
-                        this.classList.remove('tian-hidden', 'di-hidden');
-                        this.classList.add(card.rarity === 'tian' ? 'tian' : 'di');
-                        this.style.cursor = 'default';
-                    });
-                    el.style.cursor = 'pointer';
-                });
-            }
+            directResultArea.innerHTML = results.map((card, idx) => { let cls = 'result-item'; if (poolType === 'spirit') { cls += ' ' + card.rarity; let html = '<span class="' + cls + '">' + card.displayName + '</span>'; if (card.rarity === 'jue' && card.exclusive) html += '<span class="exclusive-info">（查看专属）</span>'; return '<div style="display:flex;flex-direction:column;align-items:center;">' + html + '</div>'; } else { if (card.displayName === '???') { if (card.rarity === 'tian') cls += ' tian-hidden'; else cls += ' di-hidden'; return '<span class="' + cls + '" data-idx="' + idx + '">???</span>'; } else if (card.rarity === 'xuan') { cls += ' xuan'; return '<span class="' + cls + '">' + card.name + '</span>'; } else { cls += ' huang'; return '<span class="' + cls + '">' + card.name + '</span>'; } } }).join('');
+            if (triggeredAchievements && triggeredAchievements.length > 0) { achievementNotification.textContent = '获得成就：' + triggeredAchievements.join('、'); achievementNotification.style.display = 'block'; } else { achievementNotification.style.display = 'none'; }
+            if (poolType === 'spirit') { directResultArea.querySelectorAll('.result-item.jue').forEach((el, idx2) => { const jueCards = results.filter(c => c.rarity === 'jue'); const card = jueCards[idx2]; if (card && card.exclusive) { el.addEventListener('click', () => { playClickSound(); showToast(card.exclusive); }); el.style.cursor = 'pointer'; } }); } else { directResultArea.querySelectorAll('.result-item.tian-hidden, .result-item.di-hidden').forEach(el => { el.addEventListener('click', function() { playClickSound(); const i = parseInt(this.dataset.idx); const card = results[i]; this.textContent = card.name; this.classList.remove('tian-hidden', 'di-hidden'); this.classList.add(card.rarity === 'tian' ? 'tian' : 'di'); this.style.cursor = 'default'; }); el.style.cursor = 'pointer'; }); }
         }
 
-        function openCatOverlay(results, count, triggeredAchievements, skipSoul) {
-            catNameDisplay.textContent = state.pendingCatName;
-            catMessage.textContent = '';
-            catCardResults.innerHTML = '';
-            catSoulBtn.style.display = skipSoul ? 'none' : 'inline-block';
-            catExitBtn.style.display = 'inline-block';
-            catAgainBtn.style.display = 'none';
-            catAchievementNotification.style.display = 'none';
-            catOverlay.style.display = 'flex';
-            if (skipSoul) {
-                showCatResults(results, count, triggeredAchievements);
-            }
-        }
+        function openCatOverlay(results, count, triggeredAchievements, skipSoul) { catNameDisplay.textContent = state.pendingCatName; catMessage.textContent = ''; catCardResults.innerHTML = ''; catSoulBtn.style.display = skipSoul ? 'none' : 'inline-block'; catExitBtn.style.display = 'inline-block'; catAgainBtn.style.display = 'none'; catAchievementNotification.style.display = 'none'; catOverlay.style.display = 'flex'; if (skipSoul) { showCatResults(results, count, triggeredAchievements); } }
+        function showCatResults(results, count, triggeredAchievements) { const catName = state.pendingCatName; const pool = state.pendingPool; const hasTian = results.some(c => c.rarity === 'tian'); let desc = '一只' + catName + '跳入九泉之井，'; if (hasTian && (pool === 'custom' || pool === 'diCustom' || pool === 'advanced')) { desc += '周身散发着耀眼的黄光。'; } desc += '片刻后跳出，带着' + (count === 1 ? '一张' : (count + '张')) + '卡片'; catMessage.textContent = desc; catCardResults.innerHTML = results.map((card, idx) => { if (card.displayName !== '???') { let cls = card.rarity === 'xuan' ? 'xuan-card' : 'huang-card'; return '<span class="card-item ' + cls + ' revealed">' + card.name + '</span>'; } else { let cls = card.rarity === 'tian' ? 'tian-card' : 'di-card'; return '<span class="card-item ' + cls + '" data-idx="' + idx + '">???</span>'; } }).join(''); catCardResults.querySelectorAll('.card-item:not(.revealed)').forEach(el => { el.addEventListener('click', function() { playClickSound(); const i = parseInt(this.dataset.idx); this.textContent = results[i].name; this.classList.add('revealed'); }); }); if (triggeredAchievements && triggeredAchievements.length > 0) { catAchievementNotification.textContent = '获得成就：' + triggeredAchievements.join('、'); catAchievementNotification.style.display = 'block'; } else { catAchievementNotification.style.display = 'none'; } catSoulBtn.style.display = 'none'; catAgainBtn.style.display = 'inline-block'; }
 
-        function showCatResults(results, count, triggeredAchievements) {
-            const catName = state.pendingCatName;
-            const pool = state.pendingPool;
-            const hasTian = results.some(c => c.rarity === 'tian');
-            let desc = '一只' + catName + '跳入九泉之井，';
-            if (hasTian && (pool === 'custom' || pool === 'diCustom' || pool === 'advanced')) {
-                desc += '周身散发着耀眼的黄光。';
-            }
-            const countText = count === 1 ? '一张' : (count + '张');
-            desc += '片刻后跳出，带着' + countText + '卡片';
-            catMessage.textContent = desc;
+        document.addEventListener('click', function(e) { const btn = e.target.closest('button'); if (!btn) return; if (btn.closest('.dropdown')) return; const isMajorAction = btn.id === 'singleDraw' || btn.id === 'tenDraw' || btn.id === 'catSoulBtn' || btn.id === 'catAgainBtn' || btn.id === 'confirmYesBtn' || btn.id === 'enterBtn'; if (isMajorAction) { playConfirmSound(); } else { playClickSound(); } });
 
-            catCardResults.innerHTML = results.map((card, idx) => {
-                if (card.displayName !== '???') {
-                    let cls = card.rarity === 'xuan' ? 'xuan-card' : 'huang-card';
-                    return '<span class="card-item ' + cls + ' revealed">' + card.name + '</span>';
-                } else {
-                    let cls = card.rarity === 'tian' ? 'tian-card' : 'di-card';
-                    return '<span class="card-item ' + cls + '" data-idx="' + idx + '">???</span>';
-                }
-            }).join('');
-
-            catCardResults.querySelectorAll('.card-item:not(.revealed)').forEach(el => {
-                el.addEventListener('click', function() {
-                    playClickSound();
-                    const i = parseInt(this.dataset.idx);
-                    this.textContent = results[i].name;
-                    this.classList.add('revealed');
-                });
-            });
-
-            if (triggeredAchievements && triggeredAchievements.length > 0) {
-                catAchievementNotification.textContent = '获得成就：' + triggeredAchievements.join('、');
-                catAchievementNotification.style.display = 'block';
-            } else {
-                catAchievementNotification.style.display = 'none';
-            }
-
-            catSoulBtn.style.display = 'none';
-            catAgainBtn.style.display = 'inline-block';
-        }
-
-        document.addEventListener('click', function(e) {
-            const btn = e.target.closest('button');
-            if (!btn) return;
-            if (btn.closest('.dropdown')) return;
-            const isMajorAction = btn.id === 'singleDraw' || btn.id === 'tenDraw' || 
-                                   btn.id === 'catSoulBtn' || btn.id === 'catAgainBtn' ||
-                                   btn.id === 'confirmYesBtn' || btn.id === 'enterBtn';
-            if (isMajorAction) {
-                playConfirmSound();
-            } else {
-                playClickSound();
-            }
-        });
-
-        catSoulBtn.addEventListener('click', () => {
-            showCatResults(state.pendingDrawResults, state.pendingDrawCount, state.currentDrawAchievements);
-            refreshUI();
-        });
-
-        catAgainBtn.addEventListener('click', () => {
-            performDraw(state.pendingDrawCount, true);
-        });
-
-        catExitBtn.addEventListener('click', () => {
-            catOverlay.style.display = 'none';
-            refreshUI();
-        });
-
-        recordBtn.addEventListener('click', () => {
-            const poolNames = { custom: '天品自选', diCustom: '地品自选', advanced: '高级卡池', normal: '普通卡池', spirit: '引灵' };
-            recordTitle.textContent = poolNames[state.currentPool] + ' - 抽卡记录';
-            const recs = state.records[state.currentPool] || [];
-            recordList.innerHTML = recs.length === 0 ? '<div style="text-align:center;color:#888;">暂无记录</div>' :
-                recs.map((r, i) => '<div class="record-row"><span>#' + (recs.length - i) + '</span><span>' + r + '</span></div>').join('');
-            recordOverlay.style.display = 'flex';
-        });
-
+        catSoulBtn.addEventListener('click', () => { showCatResults(state.pendingDrawResults, state.pendingDrawCount, state.currentDrawAchievements); refreshUI(); });
+        catAgainBtn.addEventListener('click', () => { performDraw(state.pendingDrawCount, true); });
+        catExitBtn.addEventListener('click', () => { catOverlay.style.display = 'none'; refreshUI(); });
+        recordBtn.addEventListener('click', () => { const poolNames = { custom: '天品自选', diCustom: '地品自选', advanced: '高级卡池', normal: '普通卡池', spirit: '引灵' }; recordTitle.textContent = poolNames[state.currentPool] + ' - 抽卡记录'; const recs = state.records[state.currentPool] || []; recordList.innerHTML = recs.length === 0 ? '<div style="text-align:center;color:#888;">暂无记录</div>' : recs.map((r, i) => '<div class="record-row"><span>#' + (recs.length - i) + '</span><span>' + r + '</span></div>').join(''); recordOverlay.style.display = 'flex'; });
         recordCloseBtn.addEventListener('click', () => { recordOverlay.style.display = 'none'; });
         achievementCloseBtn.addEventListener('click', () => { achievementOverlay.style.display = 'none'; });
 
-        function handleTianUpConfirm() {
-            const tianVal = tianSearchInput.value.trim();
-            const diVal = tianDiSearchInput.value.trim();
-            if (!tianVal || !diVal) { showToast('请选择天卡和地卡UP名士'); return; }
-            if (tianVal === '花木兰') {
-                confirmText.textContent = '是否要选择花木兰作为天品名士up？';
-                confirmOverlay.style.display = 'flex';
-                pendingHuaMulanConfirm = 'tian';
-                return;
-            }
-            if (!tianCards.includes(tianVal) || !diCards.includes(diVal)) { showToast('请输入正确的名士名称！'); return; }
-            state.tianUp.tian = tianVal;
-            state.tianUp.di = diVal;
-            state.tianUp.poolName = tianPoolNames[tianVal] || '天品自选';
-            state.tianUpHasBeenSet = true;
-            refreshUI();
-            showToast('UP名士设定成功：' + state.tianUp.poolName);
-        }
-
-        function handleDiUpConfirm() {
-            const val = diUpSearchInput.value.trim();
-            if (!val) { showToast('请输入地卡名士名称'); return; }
-            if (!diCards.includes(val)) { showToast('请输入正确的名士名称！'); return; }
-            state.diUp.name = val;
-            state.diUp.poolName = diPoolNames[val] || '地品自选';
-            state.diUpHasBeenSet = true;
-            state.diCustomPity.diUpCount = 0;
-            refreshUI();
-            showToast('地品UP名士设定成功：' + state.diUp.poolName);
-        }
+        function handleTianUpConfirm() { const tianVal = tianSearchInput.value.trim(); const diVal = tianDiSearchInput.value.trim(); if (!tianVal || !diVal) { showToast('请选择天卡和地卡UP名士'); return; } if (tianVal === '花木兰') { confirmText.textContent = '是否要选择花木兰作为天品名士up？'; confirmOverlay.style.display = 'flex'; pendingHuaMulanConfirm = 'tian'; return; } if (!tianCards.includes(tianVal) || !diCards.includes(diVal)) { showToast('请输入正确的名士名称！'); return; } state.tianUp.tian = tianVal; state.tianUp.di = diVal; state.tianUp.poolName = tianPoolNames[tianVal] || '天品自选'; state.tianUpHasBeenSet = true; refreshUI(); showToast('UP名士设定成功：' + state.tianUp.poolName); }
+        function handleDiUpConfirm() { const val = diUpSearchInput.value.trim(); if (!val) { showToast('请输入地卡名士名称'); return; } if (!diCards.includes(val)) { showToast('请输入正确的名士名称！'); return; } state.diUp.name = val; state.diUp.poolName = diPoolNames[val] || '地品自选'; state.diUpHasBeenSet = true; state.diCustomPity.diUpCount = 0; refreshUI(); showToast('地品UP名士设定成功：' + state.diUp.poolName); }
 
         confirmTianUpBtn.addEventListener('click', handleTianUpConfirm);
         confirmDiUpBtn.addEventListener('click', handleDiUpConfirm);
-
-        confirmYesBtn.addEventListener('click', () => {
-            if (pendingHuaMulanConfirm === 'tian') {
-                const diVal = tianDiSearchInput.value.trim();
-                state.tianUp.tian = '花木兰';
-                state.tianUp.di = diCards.includes(diVal) ? diVal : '地卡';
-                state.tianUp.poolName = '巾帼将相';
-                state.tianUpHasBeenSet = true;
-                if (!state.earnedA[achievementHua.id]) {
-                    state.earnedA[achievementHua.id] = true;
-                    showToast('获得隐藏成就：木兰，行！');
-                }
-            }
-            confirmOverlay.style.display = 'none';
-            pendingHuaMulanConfirm = null;
-            refreshUI();
-        });
-
-        confirmNoBtn.addEventListener('click', () => {
-            confirmOverlay.style.display = 'none';
-            pendingHuaMulanConfirm = null;
-        });
-
-        enterBtn.addEventListener('click', () => {
-            startScreen.style.display = 'none';
-            mainApp.style.display = 'flex';
-            refreshUI();
-        });
-
-        poolButtons.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const pool = e.currentTarget.dataset.pool;
-                state.currentPool = pool;
-                directResultArea.innerHTML = '';
-                achievementNotification.style.display = 'none';
-                if (pool === 'achievement') {
-                    achievementOverlay.style.display = 'flex';
-                    renderAchievementPanel();
-                }
-                refreshUI();
-            });
-        });
-
-        endPoolBtn.addEventListener('click', () => {
-            if (state.currentPool === 'custom') {
-                state.tianPity.tianCount = 0;
-                state.tianUpHasBeenSet = false;
-                state.tianUp.tian = '天卡';
-                state.tianUp.di = '地卡';
-                state.tianUp.poolName = '天品自选';
-            } else if (state.currentPool === 'diCustom') {
-                state.diCustomPity.diUpCount = 0;
-                state.diUpHasBeenSet = false;
-                state.diUp.name = '地卡';
-                state.diUp.poolName = '地品自选';
-            }
-            refreshUI();
-        });
-
+        confirmYesBtn.addEventListener('click', () => { if (pendingHuaMulanConfirm === 'tian') { const diVal = tianDiSearchInput.value.trim(); state.tianUp.tian = '花木兰'; state.tianUp.di = diCards.includes(diVal) ? diVal : '地卡'; state.tianUp.poolName = '巾帼将相'; state.tianUpHasBeenSet = true; if (!state.earnedA[achievementHua.id]) { state.earnedA[achievementHua.id] = true; showToast('获得隐藏成就：木兰，行！'); } } confirmOverlay.style.display = 'none'; pendingHuaMulanConfirm = null; refreshUI(); });
+        confirmNoBtn.addEventListener('click', () => { confirmOverlay.style.display = 'none'; pendingHuaMulanConfirm = null; });
+        enterBtn.addEventListener('click', () => { startScreen.style.display = 'none'; mainApp.style.display = 'flex'; refreshUI(); });
+        poolButtons.forEach(btn => { btn.addEventListener('click', (e) => { const pool = e.currentTarget.dataset.pool; state.currentPool = pool; directResultArea.innerHTML = ''; achievementNotification.style.display = 'none'; if (pool === 'achievement') { achievementOverlay.style.display = 'flex'; renderAchievementPanel(); } refreshUI(); }); });
+        endPoolBtn.addEventListener('click', () => { if (state.currentPool === 'custom') { state.tianPity.tianCount = 0; state.tianUpHasBeenSet = false; state.tianUp.tian = '天卡'; state.tianUp.di = '地卡'; state.tianUp.poolName = '天品自选'; } else if (state.currentPool === 'diCustom') { state.diCustomPity.diUpCount = 0; state.diUpHasBeenSet = false; state.diUp.name = '地卡'; state.diUp.poolName = '地品自选'; } refreshUI(); });
         singleDrawBtn.addEventListener('click', () => performDraw(1, false));
-        tenDrawBtn.addEventListener('click', () => {
-            if (state.currentPool === 'normal') { performDraw(0, false); }
-            else if (state.currentPool === 'spirit') { performDraw(10, false); }
-            else { performDraw(10, false); }
-        });
+        tenDrawBtn.addEventListener('click', () => { if (state.currentPool === 'normal') { performDraw(0, false); } else if (state.currentPool === 'spirit') { performDraw(10, false); } else { performDraw(10, false); } });
 
         refreshUI();
     })();
