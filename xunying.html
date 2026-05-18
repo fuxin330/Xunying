@@ -66,6 +66,35 @@
             transform: translateY(4px);
             box-shadow: 0 3px 0 #4e3a1f, 0 8px 16px black;
         }
+        .bgm-toggle {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 999;
+            background: rgba(20, 15, 30, 0.85);
+            backdrop-filter: blur(10px);
+            border: 2px solid #b59050;
+            color: #f5d78c;
+            font-weight: bold;
+            font-size: 0.9rem;
+            padding: 0.6rem 1.2rem;
+            border-radius: 2.5rem;
+            cursor: pointer;
+            transition: all 0.25s;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+        }
+        .bgm-toggle:hover {
+            background: rgba(40, 30, 50, 0.9);
+            border-color: #f3cd81;
+            color: #ffefc8;
+            box-shadow: 0 0 20px #e5b55e;
+        }
+        .bgm-toggle.playing {
+            border-color: #f3cd81;
+            color: #ffefc8;
+            box-shadow: 0 0 15px #e5b55e;
+        }
         .main-container {
             width: 100%;
             max-width: 1000px;
@@ -843,8 +872,41 @@
     </div>
 </div>
 
+<button class="bgm-toggle" id="bgmToggle">♪ 音乐</button>
+
 <script>
     (function() {
+        // ========== BGM 系统 ==========
+        const bgmToggle = document.getElementById('bgmToggle');
+        const bgm = new Audio('https://fuxin330.github.io/Xunying/yuanbai.mp3');
+        bgm.loop = true;
+        bgm.volume = 0.4;
+        let bgmPlaying = false;
+
+        bgmToggle.addEventListener('click', () => {
+            if (bgmPlaying) {
+                bgm.pause();
+                bgmToggle.textContent = '♪ 音乐';
+                bgmToggle.classList.remove('playing');
+            } else {
+                bgm.play().catch(() => {});
+                bgmToggle.textContent = '♪ 播放中';
+                bgmToggle.classList.add('playing');
+            }
+            bgmPlaying = !bgmPlaying;
+        });
+
+        // 首次用户交互时尝试自动播放
+        document.addEventListener('click', function autoPlayOnce() {
+            if (!bgmPlaying) {
+                bgm.play().then(() => {
+                    bgmPlaying = true;
+                    bgmToggle.textContent = '♪ 播放中';
+                    bgmToggle.classList.add('playing');
+                }).catch(() => {});
+            }
+        }, { once: true });
+
         // ========== 音效系统 ==========
         let audioCtx = null;
         function getAudioCtx() {
@@ -857,7 +919,6 @@
             try {
                 const ctx = getAudioCtx();
                 const now = ctx.currentTime;
-                // 振荡器：短促清脆点击音
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
                 osc.type = 'sine';
@@ -875,7 +936,6 @@
             try {
                 const ctx = getAudioCtx();
                 const now = ctx.currentTime;
-                // 第一声
                 const osc1 = ctx.createOscillator();
                 const gain1 = ctx.createGain();
                 osc1.type = 'triangle';
@@ -887,7 +947,6 @@
                 gain1.connect(ctx.destination);
                 osc1.start(now);
                 osc1.stop(now + 0.07);
-                // 第二声
                 const osc2 = ctx.createOscillator();
                 const gain2 = ctx.createGain();
                 osc2.type = 'triangle';
@@ -1635,13 +1694,10 @@
             catAgainBtn.style.display = 'inline-block';
         }
 
-        // 音效绑定：所有按钮点击
         document.addEventListener('click', function(e) {
             const btn = e.target.closest('button');
             if (!btn) return;
-            // 排除下拉框内部点击（由mousedown处理）
             if (btn.closest('.dropdown')) return;
-            // 判断是否是重要操作按钮
             const isMajorAction = btn.id === 'singleDraw' || btn.id === 'tenDraw' || 
                                    btn.id === 'catSoulBtn' || btn.id === 'catAgainBtn' ||
                                    btn.id === 'confirmYesBtn' || btn.id === 'enterBtn';
