@@ -1,0 +1,1784 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, maximum-scale=1.5, viewport-fit=cover">
+    <title>忘川风华录 · 寻英模拟器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: linear-gradient(145deg, #1e1a2f 0%, #2d2338 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Noto Serif SC', '华文楷体', '楷体', 'KaiTi', '仿宋', 'FangSong', '宋体', 'SimSun', serif;
+            padding: 0.5rem;
+            margin: 0;
+            position: relative;
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(circle at 30% 40%, rgba(230, 200, 140, 0.06) 0%, transparent 30%),
+            radial-gradient(circle at 70% 70%, rgba(180, 140, 200, 0.08) 0%, transparent 40%);
+            pointer-events: none;
+        }
+        .start-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+            padding: 1rem;
+        }
+        .start-title {
+            font-size: clamp(2rem, 8vw, 4rem);
+            font-weight: 700;
+            color: #f7e5c2;
+            text-shadow: 0 0 30px #b78c4c, 0 6px 12px #00000070;
+            letter-spacing: 6px;
+            text-align: center;
+            filter: drop-shadow(0 8px 12px black);
+            line-height: 1.3;
+        }
+        .start-btn {
+            background: radial-gradient(circle at 30% 30%, #f3da9b, #c28b3a);
+            border: 2px solid #ffe3a3;
+            color: #1d1427;
+            font-weight: bold;
+            font-size: clamp(1.4rem, 5vw, 2rem);
+            padding: 1rem 3rem;
+            border-radius: 4rem;
+            box-shadow: 0 6px 0 #6f4f2c, 0 12px 25px black;
+            cursor: pointer;
+            transition: 0.1s linear;
+            letter-spacing: 4px;
+        }
+        .start-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 3px 0 #4e3a1f, 0 8px 16px black;
+        }
+        .main-container {
+            width: 100%;
+            max-width: 1000px;
+            background: rgba(20, 15, 30, 0.7);
+            backdrop-filter: blur(25px);
+            border: 2px solid rgba(210, 180, 120, 0.35);
+            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.7), inset 0 0 40px rgba(180, 140, 80, 0.2);
+            border-radius: 2rem 1rem 2rem 1rem;
+            padding: 1.2rem 1rem 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: all 0.3s;
+            position: relative;
+            margin: 0 auto;
+        }
+        .main-title {
+            text-align: center;
+            font-size: clamp(1.5rem, 5vw, 3rem);
+            font-weight: 600;
+            color: #f7e5c2;
+            text-shadow: 0 0 20px #b78c4c, 0 4px 8px #00000050;
+            letter-spacing: 3px;
+        }
+        .content-row {
+            display: flex;
+            gap: 0.8rem;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+        .left-buttons {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            width: 100%;
+            justify-content: center;
+        }
+        @media (min-width: 768px) {
+            .left-buttons {
+                flex-direction: column;
+                min-width: 120px;
+                flex: 0 0 120px;
+                width: auto;
+                justify-content: flex-start;
+            }
+        }
+        .pool-btn {
+            background: #2d2438;
+            border: 2px solid #6d5e4b;
+            color: #e5cfaa;
+            font-size: 0.85rem;
+            font-weight: bold;
+            padding: 0.6rem 0.8rem;
+            border-radius: 2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6), inset 0 1px 3px rgba(255, 215, 140, 0.4);
+            transition: all 0.25s ease;
+            text-align: center;
+            letter-spacing: 1px;
+            background: linear-gradient(180deg, #3b2f40 0%, #201a28 100%);
+            backdrop-filter: blur(4px);
+            white-space: nowrap;
+            flex: 1 1 auto;
+            min-width: 70px;
+        }
+        @media (min-width: 768px) {
+            .pool-btn {
+                font-size: 1rem;
+                padding: 0.9rem 0.5rem;
+                border-radius: 2.5rem 0.5rem 2.5rem 0.5rem;
+                flex: none;
+                min-width: auto;
+            }
+        }
+        .pool-btn.active {
+            background: linear-gradient(180deg, #7b5e3b 0%, #4a3822 100%);
+            border-color: #f3cd81;
+            color: #ffefc8;
+            box-shadow: 0 0 20px #e5b55e, inset 0 0 8px #ffd78a;
+            transform: scale(1.03);
+        }
+        .pool-btn:hover {
+            border-color: #c9aa6b;
+            color: #ffe8bc;
+        }
+        .pool-display {
+            flex: 1;
+            background: rgba(14, 10, 22, 0.7);
+            backdrop-filter: blur(20px);
+            border-radius: 2rem 0.8rem 2rem 0.8rem;
+            border: 1px solid #b8a17a;
+            padding: 1.2rem 0.8rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 280px;
+            width: 100%;
+            box-shadow: inset 0 0 35px #00000050, 0 12px 25px black;
+            color: #f0ddc0;
+            position: relative;
+        }
+        @media (min-width: 768px) {
+            .pool-display {
+                padding: 1.8rem 1.5rem;
+                min-height: 320px;
+            }
+        }
+        .pool-title-text {
+            font-size: clamp(1.1rem, 4vw, 1.5rem);
+            font-weight: bold;
+            color: #ffd966;
+            margin-bottom: 0.4rem;
+            background: #30233980;
+            padding: 0.4rem 1.2rem;
+            border-radius: 3rem;
+            text-shadow: 0 0 10px #b78c4c;
+            text-align: center;
+            word-break: break-word;
+        }
+        .up-text {
+            font-size: clamp(0.85rem, 3vw, 1.1rem);
+            color: #ffd966;
+            margin: 0.3rem 0;
+            text-shadow: 0 0 8px #b78c4c;
+            text-align: center;
+        }
+        .pity-text {
+            font-size: clamp(0.8rem, 2.8vw, 1rem);
+            color: #c9aa7a;
+            margin: 0.2rem 0;
+            text-align: center;
+        }
+        .total-draws-text {
+            font-size: clamp(0.75rem, 2.5vw, 0.9rem);
+            color: #a090b0;
+            margin: 0.2rem 0;
+            text-align: center;
+        }
+        .probability-hint {
+            color: #ffbb5e;
+            font-weight: bold;
+            font-size: clamp(0.85rem, 3vw, 1.1rem);
+            margin-top: 0.3rem;
+            background: #3a2e44;
+            padding: 0.3rem 1.2rem;
+            border-radius: 2rem;
+            text-align: center;
+        }
+        .pool-header-btns {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            display: flex;
+            gap: 0.3rem;
+            z-index: 5;
+            flex-wrap: wrap;
+        }
+        .header-btn {
+            background: #4a3340;
+            border: 1px solid #b87c6a;
+            color: #f5c6b0;
+            font-size: 0.7rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 1.5rem;
+            cursor: pointer;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+        @media (min-width: 768px) {
+            .header-btn {
+                font-size: 0.9rem;
+                padding: 0.5rem 1.2rem;
+            }
+        }
+        .header-btn:hover {
+            background: #6b4450;
+            color: #ffdbcc;
+        }
+        .up-set-area {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            align-items: center;
+            margin: 0.8rem 0;
+            padding: 0.8rem;
+            background: rgba(30, 20, 40, 0.6);
+            border-radius: 1.5rem;
+            border: 1px dashed #b8a17a;
+            width: 100%;
+            max-width: 300px;
+        }
+        .searchable-select {
+            position: relative;
+            width: 100%;
+            max-width: 220px;
+        }
+        .searchable-select input {
+            width: 100%;
+            background: #1f1729;
+            border: 1px solid #b59050;
+            color: #f5d78c;
+            padding: 0.5rem 0.8rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+        }
+        .searchable-select .dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            max-height: 180px;
+            overflow-y: auto;
+            background: #1f1729;
+            border: 1px solid #b59050;
+            border-radius: 1rem;
+            z-index: 20;
+            display: none;
+        }
+        .searchable-select .dropdown.open {
+            display: block;
+        }
+        .searchable-select .dropdown-item {
+            padding: 0.4rem 0.8rem;
+            cursor: pointer;
+            color: #f5d78c;
+            font-size: 0.85rem;
+            transition: 0.2s;
+        }
+        .searchable-select .dropdown-item:hover {
+            background: #3b2f40;
+        }
+        .up-set-btn {
+            background: #b6964a;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: #1d1427;
+            font-size: 0.9rem;
+        }
+        .spirit-up-area {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            align-items: center;
+            margin: 0.8rem 0;
+            width: 100%;
+            max-width: 300px;
+        }
+        .normal-draw-count {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.6rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            font-size: 0.85rem;
+        }
+        .normal-draw-count input {
+            width: 50px;
+            background: #1f1729;
+            border: 1px solid #b59050;
+            color: #f5d78c;
+            padding: 0.3rem;
+            border-radius: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .right-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 0.3rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        @media (min-width: 768px) {
+            .right-actions {
+                justify-content: flex-end;
+            }
+        }
+        .draw-btn {
+            background: radial-gradient(circle at 30% 30%, #f3da9b, #c28b3a);
+            border: 1px solid #ffe3a3;
+            color: #1d1427;
+            font-weight: bold;
+            font-size: clamp(1rem, 3.5vw, 1.2rem);
+            padding: 0.6rem 1.5rem;
+            border-radius: 3rem;
+            box-shadow: 0 4px 0 #6f4f2c, 0 8px 16px black;
+            cursor: pointer;
+            transition: 0.1s linear;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+        .draw-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #4e3a1f, 0 4px 10px black;
+        }
+        .toast-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #35273e;
+            border: 1px solid #cfaa6a;
+            color: #ffecce;
+            padding: 0.6rem 1.5rem;
+            border-radius: 3rem;
+            font-weight: bold;
+            font-size: 0.9rem;
+            z-index: 999;
+            box-shadow: 0 10px 25px black;
+            backdrop-filter: blur(10px);
+            max-width: 90vw;
+            text-align: center;
+        }
+        .confirm-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1200;
+            padding: 1rem;
+        }
+        .confirm-box {
+            background: #2f243b;
+            border: 2px solid #c7a466;
+            padding: 1.5rem;
+            border-radius: 2rem 1rem;
+            color: #f7e3b2;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+            min-width: 260px;
+            max-width: 90vw;
+            font-size: 0.95rem;
+        }
+        .confirm-btns {
+            display: flex;
+            gap: 0.8rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .confirm-btn {
+            background: #b6964a;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: #1d1427;
+            font-size: 0.9rem;
+        }
+        .result-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            justify-content: center;
+            margin-top: 0.8rem;
+            max-height: 200px;
+            overflow-y: auto;
+            width: 100%;
+        }
+        @media (min-width: 768px) {
+            .result-display {
+                max-height: 250px;
+            }
+        }
+        .result-item {
+            background: #2f2440;
+            padding: 0.2rem 0.7rem;
+            border-radius: 16px;
+            font-weight: bold;
+            border: 1px solid #ab8f60;
+            cursor: default;
+            transition: 0.2s;
+            font-size: 0.8rem;
+        }
+        @media (min-width: 768px) {
+            .result-item {
+                padding: 0.3rem 1rem;
+                font-size: 1rem;
+            }
+        }
+        .result-item.jue {
+            color: #ff3333;
+            border-color: #ff3333;
+            cursor: pointer;
+        }
+        .result-item.ji {
+            color: #ff9933;
+            border-color: #ff9933;
+        }
+        .result-item.zhen {
+            color: #b793e6;
+            border-color: #b77fe0;
+        }
+        .result-item.jia {
+            color: #a0b5c0;
+        }
+        .result-item.tian-hidden {
+            color: #ffbb33;
+            border-color: #e5a020;
+            cursor: pointer;
+        }
+        .result-item.di-hidden {
+            color: #b793e6;
+            border-color: #b77fe0;
+            cursor: pointer;
+        }
+        .result-item.tian {
+            color: #ffbb33;
+            border-color: #e5a020;
+        }
+        .result-item.di {
+            color: #b793e6;
+            border-color: #b77fe0;
+        }
+        .result-item.xuan {
+            color: #a0b5c0;
+        }
+        .result-item.huang {
+            color: #888888;
+        }
+        .achievement-line {
+            width: 100%;
+            text-align: center;
+            color: #ffbb33;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-top: 0.4rem;
+            text-shadow: 0 0 8px #e5a020;
+        }
+        .cat-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1100;
+            padding: 1rem;
+        }
+        .cat-box {
+            background: #1e1629;
+            border: 3px solid #cfaa6a;
+            border-radius: 2rem 1rem;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            color: #f0ddc0;
+            box-shadow: 0 0 40px black;
+        }
+        .cat-name-display {
+            font-size: clamp(1.4rem, 5vw, 2rem);
+            font-weight: bold;
+            color: #ffd966;
+        }
+        .cat-text {
+            font-size: clamp(0.9rem, 3vw, 1.2rem);
+            text-align: center;
+            min-height: 2.5rem;
+        }
+        .card-results {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            justify-content: center;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        .card-item {
+            background: #2f2440;
+            padding: 0.2rem 0.7rem;
+            border-radius: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            border: 1px solid #ab8f60;
+            transition: 0.2s;
+            font-size: 0.8rem;
+        }
+        @media (min-width: 768px) {
+            .card-item {
+                padding: 0.3rem 1rem;
+                font-size: 1rem;
+            }
+        }
+        .card-item.revealed {
+            cursor: default;
+        }
+        .tian-card {
+            color: #ffbb33;
+            border-color: #e5a020;
+        }
+        .di-card {
+            color: #b793e6;
+            border-color: #b77fe0;
+        }
+        .xuan-card {
+            color: #a0b5c0;
+        }
+        .huang-card {
+            color: #888888;
+        }
+        .cat-actions {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            margin-top: 0.3rem;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .cat-btn {
+            background: #3b2f40;
+            border: 1px solid #b59050;
+            color: #f5d78c;
+            padding: 0.5rem 1.2rem;
+            border-radius: 2rem;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .exclusive-info {
+            color: #ffbb33;
+            font-size: 0.75rem;
+            margin-top: 0.2rem;
+        }
+        .record-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1100;
+            padding: 1rem;
+        }
+        .record-box {
+            background: #1e1629;
+            border: 3px solid #cfaa6a;
+            border-radius: 2rem 1rem;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 450px;
+            max-height: 70vh;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            color: #f0ddc0;
+            box-shadow: 0 0 40px black;
+        }
+        .record-list {
+            overflow-y: auto;
+            max-height: 45vh;
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+        .record-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.2rem 0.6rem;
+            background: #2f2440;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            gap: 0.5rem;
+        }
+        .achievement-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1100;
+            padding: 1rem;
+        }
+        .achievement-box {
+            background: #1e1629;
+            border: 3px solid #cfaa6a;
+            border-radius: 2rem 1rem;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 500px;
+            max-height: 70vh;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            color: #f0ddc0;
+            box-shadow: 0 0 40px black;
+        }
+        .achievement-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.4rem 0.8rem;
+            background: #2f2440;
+            border-radius: 1rem;
+            font-size: 0.9rem;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .achievement-item .name {
+            flex: 1;
+        }
+        .achievement-item .progress {
+            color: #c9aa7a;
+            font-size: 0.8rem;
+        }
+        .achievement-item.earned {
+            border: 1px solid #ffbb33;
+            color: #ffd966;
+        }
+        .achievement-item.earned .progress {
+            color: #ffbb33;
+        }
+    </style>
+</head>
+<body>
+
+<div id="startScreen" class="start-screen">
+    <div class="start-title">忘川风华录<br>寻英模拟器</div>
+    <button class="start-btn" id="enterBtn">寻 英</button>
+</div>
+
+<div id="mainApp" class="main-container" style="display: none;">
+    <div class="main-title">忘川风华录·寻英</div>
+    <div class="content-row">
+        <div class="left-buttons" id="leftButtons">
+            <button class="pool-btn active" data-pool="custom" id="btnCustom">天品自选</button>
+            <button class="pool-btn" data-pool="diCustom" id="btnDiCustom">地品自选</button>
+            <button class="pool-btn" data-pool="advanced" id="btnAdvanced">高级卡池</button>
+            <button class="pool-btn" data-pool="normal" id="btnNormal">普通卡池</button>
+            <button class="pool-btn" data-pool="spirit" id="btnSpirit">引灵</button>
+            <button class="pool-btn" data-pool="achievement" id="btnAchievement" style="background:#3b2f40;border-color:#b87c6a;">成就</button>
+        </div>
+
+        <div class="pool-display" id="poolDisplay">
+            <div class="pool-header-btns">
+                <button class="header-btn" id="endPoolBtn" style="display: none;">结束卡池</button>
+                <button class="header-btn" id="recordBtn">记录</button>
+            </div>
+            <div class="pool-title-text" id="poolTitle">天品自选</div>
+
+            <div id="tianUpSetArea" class="up-set-area" style="display: none;">
+                <div style="color:#ffd966;font-size:0.9rem;">设定UP名士</div>
+                <div class="searchable-select" id="tianSelectWrapper">
+                    <input type="text" id="tianSearchInput" placeholder="搜索天卡名士..." autocomplete="off">
+                    <div class="dropdown" id="tianDropdown"></div>
+                </div>
+                <div class="searchable-select" id="tianDiSelectWrapper">
+                    <input type="text" id="tianDiSearchInput" placeholder="搜索地卡名士..." autocomplete="off">
+                    <div class="dropdown" id="tianDiDropdown"></div>
+                </div>
+                <button class="up-set-btn" id="confirmTianUpBtn">确定</button>
+            </div>
+
+            <div id="diUpSetArea" class="up-set-area" style="display: none;">
+                <div style="color:#ffd966;font-size:0.9rem;">设定地品UP名士</div>
+                <div class="searchable-select" id="diUpSelectWrapper">
+                    <input type="text" id="diUpSearchInput" placeholder="搜索地卡名士..." autocomplete="off">
+                    <div class="dropdown" id="diUpDropdown"></div>
+                </div>
+                <button class="up-set-btn" id="confirmDiUpBtn">确定</button>
+            </div>
+
+            <div id="spiritUpArea" class="spirit-up-area" style="display: none;">
+                <div style="color:#ffd966;font-size:0.9rem;">引灵设定</div>
+                <div class="searchable-select" id="spiritNameWrapper">
+                    <input type="text" id="spiritNameSearchInput" placeholder="搜索专属名士..." autocomplete="off">
+                    <div class="dropdown" id="spiritNameDropdown"></div>
+                </div>
+                <div style="color:#c9aa7a;font-size:0.75rem;">九世灵UP（可选，留空则随机）</div>
+                <div class="searchable-select" id="spiritItemWrapper">
+                    <input type="text" id="spiritItemSearchInput" placeholder="搜索九世灵或留空..." autocomplete="off">
+                    <div class="dropdown" id="spiritItemDropdown"></div>
+                </div>
+            </div>
+
+            <div id="upLines">
+                <div class="up-text" id="upLine1" style="display: none;"></div>
+                <div class="up-text" id="upLine2" style="display: none;"></div>
+                <div class="up-text" id="diUpPityLine" style="display: none;"></div>
+            </div>
+
+            <div class="pity-text" id="tianPityText" style="display: none;"></div>
+            <div class="pity-text" id="diPityText" style="display: none;"></div>
+            <div class="pity-text" id="spiritPityText" style="display: none;"></div>
+            <div id="probabilityBoost" class="probability-hint" style="display: none;">天品概率提升</div>
+            <div id="totalDrawsText" class="total-draws-text" style="display: none;"></div>
+
+            <div id="normalDrawCountArea" class="normal-draw-count" style="display: none;">
+                <span>抽卡数量：</span>
+                <input type="number" id="normalDrawCountInput" value="1" min="1" max="10">
+                <span>（1-10）</span>
+            </div>
+
+            <div id="directResultArea" class="result-display" style="display: none;"></div>
+            <div id="achievementNotification" class="achievement-line" style="display: none;"></div>
+        </div>
+    </div>
+
+    <div class="right-actions">
+        <button class="draw-btn" id="singleDraw">单次寻英</button>
+        <button class="draw-btn" id="tenDraw">十连寻英</button>
+    </div>
+</div>
+
+<div id="catOverlay" class="cat-overlay" style="display: none;">
+    <div class="cat-box">
+        <div class="cat-name-display" id="catNameDisplay"></div>
+        <div class="cat-text" id="catMessage"></div>
+        <div class="card-results" id="catCardResults"></div>
+        <div id="catAchievementNotification" class="achievement-line" style="display: none;"></div>
+        <div class="cat-actions">
+            <button class="cat-btn" id="catAgainBtn" style="display: none;">再次抽取</button>
+            <button class="cat-btn" id="catExitBtn">退出</button>
+            <button class="cat-btn" id="catSoulBtn">注魂</button>
+        </div>
+    </div>
+</div>
+
+<div id="recordOverlay" class="record-overlay" style="display: none;">
+    <div class="record-box">
+        <div style="font-size:1.3rem;text-align:center;color:#ffd966;" id="recordTitle">抽卡记录</div>
+        <div class="record-list" id="recordList"></div>
+        <button class="cat-btn" id="recordCloseBtn" style="align-self:center;">关闭</button>
+    </div>
+</div>
+
+<div id="achievementOverlay" class="achievement-overlay" style="display: none;">
+    <div class="achievement-box">
+        <div style="font-size:1.3rem;text-align:center;color:#ffd966;">成就列表</div>
+        <div class="record-list" id="achievementListAll"></div>
+        <button class="cat-btn" id="achievementCloseBtn" style="align-self:center;">关闭</button>
+    </div>
+</div>
+
+<div id="confirmOverlay" class="confirm-overlay" style="display: none;">
+    <div class="confirm-box">
+        <div id="confirmText" style="font-size:1rem;">是否要选择花木兰作为天品名士up？</div>
+        <div class="confirm-btns">
+            <button class="confirm-btn" id="confirmYesBtn">确认</button>
+            <button class="confirm-btn" id="confirmNoBtn">取消</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ========== 音效系统 ==========
+        let audioCtx = null;
+        function getAudioCtx() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioCtx;
+        }
+        function playClickSound() {
+            try {
+                const ctx = getAudioCtx();
+                const now = ctx.currentTime;
+                // 振荡器：短促清脆点击音
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(900, now);
+                osc.frequency.exponentialRampToValueAtTime(600, now + 0.06);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } catch (e) {}
+        }
+        function playConfirmSound() {
+            try {
+                const ctx = getAudioCtx();
+                const now = ctx.currentTime;
+                // 第一声
+                const osc1 = ctx.createOscillator();
+                const gain1 = ctx.createGain();
+                osc1.type = 'triangle';
+                osc1.frequency.setValueAtTime(800, now);
+                osc1.frequency.exponentialRampToValueAtTime(500, now + 0.05);
+                gain1.gain.setValueAtTime(0.3, now);
+                gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+                osc1.connect(gain1);
+                gain1.connect(ctx.destination);
+                osc1.start(now);
+                osc1.stop(now + 0.07);
+                // 第二声
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.type = 'triangle';
+                osc2.frequency.setValueAtTime(1000, now + 0.06);
+                osc2.frequency.exponentialRampToValueAtTime(650, now + 0.11);
+                gain2.gain.setValueAtTime(0.25, now + 0.06);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.13);
+                osc2.connect(gain2);
+                gain2.connect(ctx.destination);
+                osc2.start(now + 0.06);
+                osc2.stop(now + 0.14);
+            } catch (e) {}
+        }
+
+        const tianCards = ['嬴政','卫青','杨玉环','李白','曹植','韩非','蒙恬','陆羽','公输班','郑和','诸葛亮','张骞','欧阳修','唐伯虎','萧绰','墨翟','陆游','李靖','谢玄','刘禹锡','张良','黄道婆','司马迁','刘秀','庄周','汤显祖','王阳明','司马光','姬发','徐霞客','岳飞','王安石','李斯','周瑜','吴承恩','李冰','李清照','刘病已','宋应星','刘彻','韩信','高长恭','西施','李煜','夫差','姜太公','曹雪芹','宋慈','张居正','孙策','玄奘','李世民','邓绥','勾践','赵匡胤','武则天','白起','奢香','戚继光','祖冲之','屈原','朱元璋','狄仁杰','白居易','刘娥','李商隐','元宏','朱棣','陶渊明','于谦','梁红玉','商鞅','孙武','赵云','王昭君','辛弃疾','项羽','花木兰','张择端'];
+        const diCards = ['荆轲','高渐离','上官婉儿','苏轼','阮籍','嵇康','太平公主','李隆基','杜甫','霍去病','甄姬','晏几道','虞姬','王实甫','小乔','曹丕','解忧公主','莫邪','阴丽华','谢道韫','伍子胥','鱼玄机','王贞仪','元稹','冯梦龙','卫子夫','李师师','范蠡','王羲之','赵孟頫','班昭','吕雉','管道昇','大乔','窦猗房','蒲松龄','马皇后','薛涛','公孙大娘','刘邦'];
+        const xuanCards = ['佛印','李秀宁','潘安','石崇','绿珠','魏征','巴清','杨容姬','许负','李淳风','狄青','袁天罡','大周后','柳如是','孙思邈','红拂女','毛延寿','干将'];
+        const huangCards = ['妹至','墨痕','笔才','纸思','鲶滚滚','砚魂','守财灵','招财灵'];
+
+        const groupA = new Set(['梁红玉','花木兰','白起','岳飞','班昭','庄周','朱元璋','张居正','郑和','刘彻','曹植','姬发','李世民','李白','赵云','王阳明','赵匡胤','高长恭','司马光','孙武','墨翟','公输班','刘病已','霍去病','阮籍','甄姬','曹丕','荆轲','莫邪','范蠡','王羲之','晏几道','李秀宁','魏征','巴清','柳如是','狄青','李淳风','红拂女','妹至','周瑜','孙策','辛弃疾','嬴政','于谦','刘禹锡','刘秀','谢玄','陶渊明','朱棣','刘娥','徐霞客','韩信','夫差','王安石','武则天','韩非','萧绰']);
+
+        const jueA = ['翡翠珠珠·绝','深烟球球·绝','雪青炎炎·绝','霁蓝宝宝·绝','墨灰星魂·绝','绿玉星魂·绝','群青星魂·绝','藤紫星魂·绝','墨灰梦魂·绝','绿玉梦魂·绝','群青梦魂·绝','藤紫梦魂·绝','天青梦魂·绝','天青星魂·绝','金红蟹蟹·绝','雀蓝贝贝·绝','云白贝贝·绝','黑曜贝贝·绝','末茶贝贝·绝'];
+        const jueB = ['霜素梦魂·绝','杏红圆圆·绝','荼白团团·绝','金盏圈圈·绝','酡颜崽崽·绝','霜素星魂·绝','赤金星魂·绝','茜粉星魂·绝','琥珀星魂·绝','赤金梦魂·绝','茜粉梦魂·绝','琥珀梦魂·绝','苍灰星魂·绝','苍灰梦魂·绝','蕊粉蟹蟹·绝','藤黄贝贝·绝','藤黄蟹蟹·绝','蟹籽蟹蟹·绝','雷猴贝贝·绝'];
+        const jiBase = ['深烟灵','雪青灵','霁蓝灵','翡翠灵','墨灰灵','绿玉魂','群青魂','藤紫魂','杏红灵','荼白灵','金盏灵','酡颜灵','霜素魂','赤金魂','茜粉魂','琥珀魂'];
+        function getJiSpirits() { return jiBase.map(n => n + '·极'); }
+        function getZhenSpirits() { return jiBase.map(n => n + '·珍'); }
+        function getJiaSpirits() { return jiBase.map(n => n + '·佳'); }
+
+        const allNames = [...tianCards, ...diCards, ...xuanCards, ...huangCards];
+
+        const tianPoolNames = {
+            '刘禹锡':'诗引碧霄','白居易':'乐天而安','庄周':'逍遥太清','李商隐':'锦瑟繁弦','邓绥':'绥静四海','诸葛亮':'天星照汉','赵云':'枪出云龙现','李冰':'万古川流','张骞':'龙沙万里','玄奘':'大唐西域行','宋慈':'听讼清明','狄仁杰':'斗南云飞','刘病已':'宣威寰海','卫青':'马踏飞沙','刘秀':'赤耀光武','韩信':'功成定汉','司马光':'鉴往治道','汤显祖':'梦笔华辉','徐霞客':'独鹤与飞','郑和':'宝船巡万里','陶渊明':'东篱新友','孙武':'远略春秋','奢香':'彝火熠明','朱元璋':'布衣定乾坤','王阳明':'洗墨涤心','公输班':'机巧天算','朱棣':'永乐鸿明','戚继光':'定海封疆','萧绰':'纵马松漠','刘娥':'垂拱平章','李靖':'靖唐兵略','李世民':'见字如晤','陆羽':'山水煎茶','欧阳修':'平山旧忆','张居正':'江陵风骨','王安石':'临川文章','屈原':'大道其彰','蒙恬':'万里安边','嬴政':'汉关秦月','司马迁':'纪史流芳','吴承恩':'西游释厄','武则天':'武运太平','辛弃疾':'山河相望','墨翟':'天志墨行','姬发':'明昭有周','姜太公':'上兵伐谋','赵匡胤':'提剑开炎图','商鞅':'明法立信','李斯':'书尽其妙','陆游':'山阴清绝','元宏':'至政太和','高长恭':'兰陵入阵','白起':'剑荡四方','谢玄':'芝兰玉树','黄道婆':'万象人间','梁红玉':'凛凛红颜','韩非':'法度权衡','祖冲之':'筹算万象','宋应星':'造化天工','刘彻':'心曲','王昭君':'素手撷秋风','曹植':'建安风骨','曹雪芹':'世情如梦','夫差':'吴钩鸣剑','勾践':'定霸东南','李煜':'春花秋月','于谦':'凛凛清风','李清照':'词韵风流','西施':'彼美人兮','项羽':'霸王别姬','周瑜':'烽火连赤壁','孙策':'虎啸震江东','唐伯虎':'竹外桃花','杨玉环':'盛世霓裳','李白':'诗称李杜','张良':'再书圯上','岳飞':'尽忠报国','张择端':'清明上河图','花木兰':'巾帼将相'
+        };
+        const diPoolNames = {
+            '王实甫':'情成西厢','解忧公主':'锦车西涉','窦猗房':'凰鸣椒房','伍子胥':'怒涛奔雷','阴丽华':'秀丽姝华','蒲松龄':'志异留仙','班昭':'东观续史','元稹':'清江照心','薛涛':'浣花成笺','马皇后':'母仪天下','王羲之':'见字如晤','大乔':'沾线绣山河','小乔':'蔷薇露染香','上官婉儿':'巾帼将相','太平公主':'武运太平','王贞仪':'数算星相','赵孟頫':'逢此王孙','管道昇':'兰梅清思','虞姬':'霸王别姬','莫邪':'巧夺天工','李隆基':'万国衣冠','高渐离':'闻弦赏音','荆轲':'刺秦','冯梦龙':'执笔成说','李师师':'素手撷秋风','吕雉':'大汉玉骨','刘邦':'汉关秦月','杜甫':'诗称李杜','谢道韫':'山阴梅雪','卫子夫':'心曲','范蠡':'于越沧波','公孙大娘':'剑舞弦声','霍去病':'马踏飞沙','阮籍':'竹林间','嵇康':'大道其彰','曹丕':'建安风骨','甄姬':'巧创灵鬟','晏几道':'痴绝词坛','鱼玄机':'巾帼遗恨','苏轼':'忘川老饕'
+        };
+
+        const achievementsDi = [
+            { id: 'a4', name: '寻英识士·五瑞', min: 5 },
+            { id: 'a3', name: '寻英识士·四象', min: 4 },
+            { id: 'a2', name: '寻英识士·三英', min: 3 },
+            { id: 'a1', name: '寻英识士·两仪', min: 2 }
+        ];
+        const achievementsTian = [
+            { id: 'a8', name: '赞美雪白雪白猫猫神！', min: 4 },
+            { id: 'a7', name: '胖胖白猫显显灵', min: 3 },
+            { id: 'a6', name: '大白猫保佑', min: 2 },
+            { id: 'a5', name: '小白猫赏脸', min: 1 }
+        ];
+        const achievementA9 = { id: 'a9', name: '小黑猫捣鬼' };
+        const achievementHua = { id: 'a10', name: '木兰，行！' };
+        const achievementsB = [
+            { id: 'b1', name: '大黑猫作祟', target: 3 },
+            { id: 'b2', name: '煤球黑猫黑乎乎', target: 5 },
+            { id: 'b3', name: '求你了深渊黑猫大仙！', target: 10 }
+        ];
+
+        const state = {
+            currentPool: 'custom',
+            tianUp: { tian: '天卡', di: '地卡', poolName: '天品自选' },
+            tianUpHasBeenSet: false,
+            diUp: { name: '地卡', poolName: '地品自选' },
+            diUpHasBeenSet: false,
+            tianPity: { counter: 0, forDi: 0, tianCount: 0 },
+            diCustomPity: { counter: 0, forDi: 0, diUpCount: 0 },
+            advancedPity: { counter: 0, forDi: 0 },
+            normalPity: { forXuan: 0 },
+            spiritPity: { counter: 0 },
+            spiritUp: { name: '', item: '', group: 'A' },
+            records: { custom: [], diCustom: [], advanced: [], normal: [], spirit: [] },
+            totalDraws: { custom: 0, diCustom: 0, advanced: 0, normal: 0, spirit: 0 },
+            pendingDrawResults: [],
+            pendingDrawCount: 0,
+            pendingPool: '',
+            pendingCatName: '',
+            earnedA: {},
+            earnedB: { b1: 0, b2: 0, b3: 0 },
+            noTianStreak: 0,
+            noTianStreakCount: 0,
+            currentDrawAchievements: []
+        };
+
+        const catTypes = ['黑猫','白猫','狸花猫','三花猫','橘猫'];
+
+        const startScreen = document.getElementById('startScreen');
+        const mainApp = document.getElementById('mainApp');
+        const enterBtn = document.getElementById('enterBtn');
+        const poolButtons = document.querySelectorAll('.pool-btn');
+        const btnCustom = document.getElementById('btnCustom');
+        const btnDiCustom = document.getElementById('btnDiCustom');
+        const poolTitle = document.getElementById('poolTitle');
+        const tianUpSetArea = document.getElementById('tianUpSetArea');
+        const diUpSetArea = document.getElementById('diUpSetArea');
+        const confirmTianUpBtn = document.getElementById('confirmTianUpBtn');
+        const confirmDiUpBtn = document.getElementById('confirmDiUpBtn');
+        const spiritUpArea = document.getElementById('spiritUpArea');
+        const upLine1 = document.getElementById('upLine1');
+        const upLine2 = document.getElementById('upLine2');
+        const diUpPityLine = document.getElementById('diUpPityLine');
+        const tianPityText = document.getElementById('tianPityText');
+        const diPityText = document.getElementById('diPityText');
+        const spiritPityText = document.getElementById('spiritPityText');
+        const probabilityBoostDiv = document.getElementById('probabilityBoost');
+        const totalDrawsText = document.getElementById('totalDrawsText');
+        const endPoolBtn = document.getElementById('endPoolBtn');
+        const recordBtn = document.getElementById('recordBtn');
+        const normalDrawCountArea = document.getElementById('normalDrawCountArea');
+        const normalDrawCountInput = document.getElementById('normalDrawCountInput');
+        const directResultArea = document.getElementById('directResultArea');
+        const achievementNotification = document.getElementById('achievementNotification');
+        const singleDrawBtn = document.getElementById('singleDraw');
+        const tenDrawBtn = document.getElementById('tenDraw');
+        const catOverlay = document.getElementById('catOverlay');
+        const catNameDisplay = document.getElementById('catNameDisplay');
+        const catMessage = document.getElementById('catMessage');
+        const catCardResults = document.getElementById('catCardResults');
+        const catAchievementNotification = document.getElementById('catAchievementNotification');
+        const catExitBtn = document.getElementById('catExitBtn');
+        const catSoulBtn = document.getElementById('catSoulBtn');
+        const catAgainBtn = document.getElementById('catAgainBtn');
+        const recordOverlay = document.getElementById('recordOverlay');
+        const recordTitle = document.getElementById('recordTitle');
+        const recordList = document.getElementById('recordList');
+        const recordCloseBtn = document.getElementById('recordCloseBtn');
+        const achievementOverlay = document.getElementById('achievementOverlay');
+        const achievementListAll = document.getElementById('achievementListAll');
+        const achievementCloseBtn = document.getElementById('achievementCloseBtn');
+        const confirmOverlay = document.getElementById('confirmOverlay');
+        const confirmText = document.getElementById('confirmText');
+        const confirmYesBtn = document.getElementById('confirmYesBtn');
+        const confirmNoBtn = document.getElementById('confirmNoBtn');
+
+        const tianSearchInput = document.getElementById('tianSearchInput');
+        const tianDropdown = document.getElementById('tianDropdown');
+        const tianDiSearchInput = document.getElementById('tianDiSearchInput');
+        const tianDiDropdown = document.getElementById('tianDiDropdown');
+        const diUpSearchInput = document.getElementById('diUpSearchInput');
+        const diUpDropdown = document.getElementById('diUpDropdown');
+        const spiritNameSearchInput = document.getElementById('spiritNameSearchInput');
+        const spiritNameDropdown = document.getElementById('spiritNameDropdown');
+        const spiritItemSearchInput = document.getElementById('spiritItemSearchInput');
+        const spiritItemDropdown = document.getElementById('spiritItemDropdown');
+
+        let pendingHuaMulanConfirm = null;
+
+        function random() {
+            const arr = new Uint32Array(1);
+            crypto.getRandomValues(arr);
+            return arr[0] / 4294967296;
+        }
+
+        function setupSearchable(input, dropdown, getOptions, onSelect) {
+            input.addEventListener('focus', () => {
+                const options = getOptions();
+                filterDropdown(input, dropdown, options);
+                dropdown.classList.add('open');
+            });
+            input.addEventListener('input', () => {
+                const options = getOptions();
+                filterDropdown(input, dropdown, options);
+                dropdown.classList.add('open');
+            });
+            input.addEventListener('blur', () => { setTimeout(() => dropdown.classList.remove('open'), 150); });
+            dropdown.addEventListener('mousedown', (e) => {
+                const item = e.target.closest('.dropdown-item');
+                if (item) {
+                    input.value = item.textContent;
+                    dropdown.classList.remove('open');
+                    if (onSelect) onSelect(item.textContent);
+                    playClickSound();
+                }
+            });
+        }
+
+        function filterDropdown(input, dropdown, options) {
+            const val = input.value.toLowerCase();
+            dropdown.innerHTML = options.filter(o => o.toLowerCase().includes(val)).map(o => '<div class="dropdown-item">' + o + '</div>').join('');
+        }
+
+        const tianUpOptions = tianCards.filter(n => n !== '花木兰');
+        const diUpOptions = [...diCards];
+
+        setupSearchable(tianSearchInput, tianDropdown, () => tianUpOptions, (val) => { state.tianUp.tian = val; });
+        setupSearchable(tianDiSearchInput, tianDiDropdown, () => diUpOptions, (val) => { state.tianUp.di = val; });
+        setupSearchable(diUpSearchInput, diUpDropdown, () => diUpOptions, (val) => { state.diUp.name = val; });
+        setupSearchable(spiritNameSearchInput, spiritNameDropdown, () => allNames, (val) => {
+            state.spiritUp.name = val;
+            state.spiritUp.group = groupA.has(val) ? 'A' : 'B';
+            spiritItemSearchInput.value = '';
+            state.spiritUp.item = '';
+        });
+        setupSearchable(spiritItemSearchInput, spiritItemDropdown, () => [...jueA, ...jueB], (val) => { state.spiritUp.item = val; });
+
+        function showToast(text) {
+            const old = document.querySelector('.toast-message');
+            if (old) old.remove();
+            const t = document.createElement('div');
+            t.className = 'toast-message';
+            t.textContent = text;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 2000);
+        }
+
+        function getPity() {
+            if (state.currentPool === 'custom') return state.tianPity;
+            if (state.currentPool === 'diCustom') return state.diCustomPity;
+            if (state.currentPool === 'advanced') return state.advancedPity;
+            if (state.currentPool === 'normal') return state.normalPity;
+            if (state.currentPool === 'spirit') return state.spiritPity;
+            return null;
+        }
+
+        function getTianProbability(pity) {
+            const c = pity.counter;
+            if (c < 50) return 0.02;
+            if (c < 60) return 0.02 + (c - 49) * 0.02;
+            if (c < 70) return 0.22 + (c - 59) * 0.03;
+            if (c < 80) return 0.37 + (c - 69) * 0.05;
+            return 1.0;
+        }
+
+        function addRecord(pool, result) {
+            state.records[pool].unshift(result);
+            if (state.records[pool].length > 80) state.records[pool].pop();
+        }
+
+        function updatePoolButtons() {
+            btnCustom.textContent = '天品自选';
+            btnDiCustom.textContent = '地品自选';
+            if (state.tianUpHasBeenSet) btnCustom.textContent = state.tianUp.poolName;
+            if (state.diUpHasBeenSet) btnDiCustom.textContent = state.diUp.poolName;
+        }
+
+        function checkAchievements(results, isTenDraw) {
+            const triggered = [];
+            if (isTenDraw && results.length === 10) {
+                const diCount = results.filter(c => c.rarity === 'di').length;
+                const tianCount = results.filter(c => c.rarity === 'tian').length;
+                for (const ach of achievementsDi) {
+                    if (diCount >= ach.min && !state.earnedA[ach.id]) {
+                        state.earnedA[ach.id] = true;
+                        triggered.push(ach.name);
+                        break;
+                    }
+                }
+                for (const ach of achievementsTian) {
+                    if (tianCount >= ach.min && !state.earnedA[ach.id]) {
+                        state.earnedA[ach.id] = true;
+                        triggered.push(ach.name);
+                        break;
+                    }
+                }
+            }
+            if (!state.earnedA[achievementA9.id] && state.noTianStreak >= 60) {
+                state.earnedA[achievementA9.id] = true;
+                triggered.push(achievementA9.name);
+            }
+            if (state.noTianStreak >= 60) {
+                state.noTianStreakCount++;
+                state.noTianStreak = 0;
+                for (const ach of achievementsB) {
+                    if (state.noTianStreakCount >= ach.target && state.earnedB[ach.id] < ach.target) {
+                        state.earnedB[ach.id] = ach.target;
+                        triggered.push(ach.name);
+                    }
+                }
+            }
+            return triggered;
+        }
+
+        function updateNoTianStreak(hasTian) {
+            if (hasTian) {
+                if (state.noTianStreak >= 60) state.noTianStreakCount++;
+                state.noTianStreak = 0;
+            } else {
+                state.noTianStreak++;
+            }
+            for (const ach of achievementsB) {
+                if (state.noTianStreakCount >= ach.target && state.earnedB[ach.id] < ach.target) {
+                    state.earnedB[ach.id] = ach.target;
+                }
+            }
+        }
+
+        function refreshUI() {
+            poolButtons.forEach(b => b.classList.toggle('active', b.dataset.pool === state.currentPool));
+
+            if (state.currentPool === 'custom') {
+                poolTitle.textContent = state.tianUp.poolName;
+            } else if (state.currentPool === 'diCustom') {
+                poolTitle.textContent = state.diUp.poolName;
+            } else if (state.currentPool === 'achievement') {
+                poolTitle.textContent = '成就';
+            } else {
+                const names = { advanced: '高级卡池', normal: '普通卡池', spirit: '引灵' };
+                poolTitle.textContent = names[state.currentPool] || '';
+            }
+
+            updatePoolButtons();
+
+            const isAchievement = state.currentPool === 'achievement';
+            const isTian = state.currentPool === 'custom';
+            const isDi = state.currentPool === 'diCustom';
+            endPoolBtn.style.display = (isTian || isDi) ? 'inline-block' : 'none';
+            recordBtn.style.display = isAchievement ? 'none' : 'inline-block';
+            tianUpSetArea.style.display = (isTian && !state.tianUpHasBeenSet) ? 'flex' : 'none';
+            diUpSetArea.style.display = (isDi && !state.diUpHasBeenSet) ? 'flex' : 'none';
+            spiritUpArea.style.display = state.currentPool === 'spirit' ? 'flex' : 'none';
+            normalDrawCountArea.style.display = state.currentPool === 'normal' ? 'flex' : 'none';
+            directResultArea.style.display = (state.currentPool === 'normal' || state.currentPool === 'spirit') ? 'flex' : 'none';
+            achievementNotification.style.display = 'none';
+            if (state.currentPool === 'achievement') {
+                directResultArea.style.display = 'flex';
+                renderAchievementPanel();
+            }
+
+            if (!isAchievement && state.currentPool !== 'spirit') {
+                const draws = state.totalDraws[state.currentPool] || 0;
+                totalDrawsText.textContent = '已抽' + draws + '抽';
+                totalDrawsText.style.display = 'block';
+            } else if (state.currentPool === 'spirit') {
+                const draws = state.totalDraws['spirit'] || 0;
+                totalDrawsText.textContent = '已抽' + draws + '抽';
+                totalDrawsText.style.display = 'block';
+            } else {
+                totalDrawsText.style.display = 'none';
+            }
+
+            upLine1.style.display = 'none';
+            upLine2.style.display = 'none';
+            diUpPityLine.style.display = 'none';
+
+            if (isTian && state.tianUpHasBeenSet) {
+                const a = 3 - state.tianPity.tianCount;
+                upLine1.textContent = '天品名士' + state.tianUp.tian + '、地品名士' + state.tianUp.di + '出现概率提升！';
+                upLine2.textContent = '此卡池再抽' + a + '张天卡必得天品名士' + state.tianUp.tian + '！';
+                upLine1.style.display = 'block';
+                upLine2.style.display = 'block';
+            }
+            if (isDi && state.diUpHasBeenSet) {
+                upLine1.textContent = '地品名士' + state.diUp.name + '出现概率提升！';
+                upLine1.style.display = 'block';
+                const diRemain = 30 - state.diCustomPity.diUpCount;
+                diUpPityLine.textContent = '再抽' + diRemain + '抽必得地卡' + state.diUp.name;
+                diUpPityLine.style.display = 'block';
+            }
+
+            tianPityText.style.display = 'none';
+            diPityText.style.display = 'none';
+            spiritPityText.style.display = 'none';
+            probabilityBoostDiv.style.display = 'none';
+
+            if (!isAchievement) {
+                const pity = getPity();
+                if (state.currentPool === 'custom' || state.currentPool === 'diCustom' || state.currentPool === 'advanced') {
+                    const diRemain = 10 - (pity ? pity.forDi : 0);
+                    diPityText.textContent = '再抽' + diRemain + '次必得地品以上名士';
+                    diPityText.style.display = 'block';
+                    if (pity && pity.counter >= 51) {
+                        const tianRemain = 80 - pity.counter;
+                        tianPityText.textContent = '再抽' + tianRemain + '次必得天品名士';
+                        tianPityText.style.display = 'block';
+                        probabilityBoostDiv.style.display = 'block';
+                    }
+                } else if (state.currentPool === 'normal') {
+                    diPityText.textContent = '再抽' + (10 - state.normalPity.forXuan) + '次必得玄卡以上名士';
+                    diPityText.style.display = 'block';
+                } else if (state.currentPool === 'spirit') {
+                    spiritPityText.textContent = '再抽' + (40 - state.spiritPity.counter) + '次必得绝品九世灵';
+                    spiritPityText.style.display = 'block';
+                }
+            }
+
+            if (state.currentPool === 'spirit') {
+                singleDrawBtn.textContent = '一次';
+                tenDrawBtn.textContent = '十次';
+                singleDrawBtn.style.display = 'inline-block';
+                tenDrawBtn.style.display = 'inline-block';
+            } else if (state.currentPool === 'normal') {
+                singleDrawBtn.style.display = 'none';
+                tenDrawBtn.textContent = '寻英';
+                tenDrawBtn.style.display = 'inline-block';
+            } else if (isAchievement) {
+                singleDrawBtn.style.display = 'none';
+                tenDrawBtn.style.display = 'none';
+            } else {
+                singleDrawBtn.textContent = '单次寻英';
+                tenDrawBtn.textContent = '十连寻英';
+                singleDrawBtn.style.display = 'inline-block';
+                tenDrawBtn.style.display = 'inline-block';
+            }
+        }
+
+        function renderAchievementPanel() {
+            const allAch = [
+                ...achievementsDi.map(a => ({ ...a, type: 'di' })),
+                ...achievementsTian.map(a => ({ ...a, type: 'tian' })),
+                { ...achievementA9, type: 'a9' },
+                { ...achievementHua, type: 'a10' },
+                ...achievementsB.map(b => ({ ...b, type: 'b' }))
+            ];
+            achievementListAll.innerHTML = allAch.map(a => {
+                if (a.type === 'b') {
+                    const count = state.earnedB[a.id] || 0;
+                    const earned = count >= a.target;
+                    return '<div class="achievement-item' + (earned ? ' earned' : '') + '"><span class="name">' + a.name + '</span><span class="progress">' + count + '/' + a.target + '</span></div>';
+                } else {
+                    const earned = state.earnedA[a.id];
+                    return '<div class="achievement-item' + (earned ? ' earned' : '') + '"><span class="name">' + a.name + '</span><span class="progress">' + (earned ? '已获得' : '未获得') + '</span></div>';
+                }
+            }).join('');
+        }
+
+        function pickRandom(arr) {
+            return arr[Math.floor(random() * arr.length)];
+        }
+
+        function drawCustomOrAdvanced() {
+            const pity = getPity();
+            if (pity.forDi >= 9) {
+                pity.forDi = 0;
+                pity.counter++;
+                return generateDiCard();
+            }
+            const tianProb = getTianProbability(pity);
+            const r = random();
+            if (r < tianProb) {
+                pity.counter = 0;
+                pity.forDi++;
+                return generateTianCard();
+            } else if (r < tianProb + 0.15) {
+                pity.counter++;
+                pity.forDi = 0;
+                return generateDiCard();
+            } else {
+                pity.counter++;
+                pity.forDi++;
+                const name = pickRandom(xuanCards);
+                return { rarity: 'xuan', name: name, displayName: name };
+            }
+        }
+
+        function drawDiCustom() {
+            const pity = state.diCustomPity;
+            pity.diUpCount++;
+            if (pity.diUpCount >= 30) {
+                pity.diUpCount = 0;
+                pity.counter++;
+                if (pity.forDi >= 9) { pity.forDi = 0; } else { pity.forDi++; }
+                return { rarity: 'di', name: state.diUp.name, displayName: '???' };
+            }
+            if (pity.forDi >= 9) {
+                pity.forDi = 0;
+                pity.counter++;
+                const card = generateDiCard();
+                if (card.name === state.diUp.name) { pity.diUpCount = 0; }
+                return card;
+            }
+            const tianProb = getTianProbability(pity);
+            const r = random();
+            if (r < tianProb) {
+                pity.counter = 0;
+                pity.forDi++;
+                return generateTianCard();
+            } else if (r < tianProb + 0.15) {
+                pity.counter++;
+                pity.forDi = 0;
+                const card = generateDiCard();
+                if (card.name === state.diUp.name) { pity.diUpCount = 0; }
+                return card;
+            } else {
+                pity.counter++;
+                pity.forDi++;
+                const name = pickRandom(xuanCards);
+                return { rarity: 'xuan', name: name, displayName: name };
+            }
+        }
+
+        function drawNormal() {
+            const pity = state.normalPity;
+            if (pity.forXuan >= 9) {
+                pity.forXuan = 0;
+                if (random() < 0.02 / 0.22) {
+                    const name = pickRandom(diCards);
+                    return { rarity: 'di', name: name, displayName: '???' };
+                } else {
+                    const name = pickRandom(xuanCards);
+                    return { rarity: 'xuan', name: name, displayName: name };
+                }
+            }
+            const r = random();
+            if (r < 0.02) {
+                pity.forXuan = 0;
+                const name = pickRandom(diCards);
+                return { rarity: 'di', name: name, displayName: '???' };
+            } else if (r < 0.22) {
+                pity.forXuan = 0;
+                const name = pickRandom(xuanCards);
+                return { rarity: 'xuan', name: name, displayName: name };
+            } else {
+                pity.forXuan++;
+                const name = pickRandom(huangCards);
+                return { rarity: 'huang', name: name, displayName: name };
+            }
+        }
+
+        function drawSpirit() {
+            const pity = state.spiritPity;
+            if (pity.counter >= 39) {
+                pity.counter = 0;
+                return generateJueSpirit();
+            }
+            const r = random();
+            if (r < 0.05) {
+                pity.counter = 0;
+                return generateJueSpirit();
+            } else if (r < 0.35) {
+                pity.counter++;
+                const name = pickRandom(getJiSpirits());
+                return { rarity: 'ji', name: name, displayName: name };
+            } else if (r < 0.65) {
+                pity.counter++;
+                const name = pickRandom(getZhenSpirits());
+                return { rarity: 'zhen', name: name, displayName: name };
+            } else {
+                pity.counter++;
+                const name = pickRandom(getJiaSpirits());
+                return { rarity: 'jia', name: name, displayName: name };
+            }
+        }
+
+        function generateJueSpirit() {
+            const allJue = [...jueA, ...jueB];
+            const hasItemUp = state.spiritUp.item !== '' && random() < 0.5;
+            let itemName;
+            if (hasItemUp) {
+                itemName = state.spiritUp.item;
+            } else {
+                itemName = pickRandom(allJue);
+            }
+            const isUpName = state.spiritUp.name !== '' && random() < 0.5;
+            let exclusiveName;
+            if (isUpName) {
+                exclusiveName = state.spiritUp.name;
+            } else {
+                const groupNames = allNames.filter(n => state.spiritUp.group === 'A' ? groupA.has(n) : !groupA.has(n));
+                exclusiveName = pickRandom(groupNames.length > 0 ? groupNames : allNames);
+            }
+            return { rarity: 'jue', name: itemName, displayName: itemName, exclusive: exclusiveName + '专属' };
+        }
+
+        function generateTianCard() {
+            if (state.currentPool === 'custom') {
+                const pity = state.tianPity;
+                pity.tianCount++;
+                let card;
+                if (pity.tianCount >= 3) {
+                    card = { rarity: 'tian', name: state.tianUp.tian, displayName: '???' };
+                    pity.tianCount = 0;
+                } else if (random() < 0.3) {
+                    card = { rarity: 'tian', name: state.tianUp.tian, displayName: '???' };
+                } else {
+                    const name = pickRandom(tianCards.filter(n => n !== state.tianUp.tian));
+                    card = { rarity: 'tian', name: name, displayName: '???' };
+                }
+                if (card.name === state.tianUp.tian) { pity.tianCount = 0; }
+                return card;
+            }
+            const name = pickRandom(tianCards);
+            return { rarity: 'tian', name: name, displayName: '???' };
+        }
+
+        function generateDiCard() {
+            if (state.currentPool === 'custom') {
+                if (random() < 0.3) return { rarity: 'di', name: state.tianUp.di, displayName: '???' };
+                return { rarity: 'di', name: pickRandom(diCards), displayName: '???' };
+            }
+            if (state.currentPool === 'diCustom') {
+                if (random() < 0.3) return { rarity: 'di', name: state.diUp.name, displayName: '???' };
+                return { rarity: 'di', name: pickRandom(diCards), displayName: '???' };
+            }
+            return { rarity: 'di', name: pickRandom(diCards), displayName: '???' };
+        }
+
+        function performDraw(times, reuseCat) {
+            if (state.currentPool === 'achievement') return;
+            if (state.currentPool === 'spirit') {
+                if (!state.spiritUp.name) { showToast('请先选择专属名士'); return; }
+                const results = [];
+                for (let i = 0; i < times; i++) results.push(drawSpirit());
+                state.totalDraws['spirit'] += times;
+                displayDirectResults(results, 'spirit');
+                refreshUI();
+                return;
+            }
+            if (state.currentPool === 'normal') {
+                const rawCount = parseInt(normalDrawCountInput.value);
+                if (isNaN(rawCount) || rawCount < 1 || rawCount > 10) { showToast('请输入1-10之间的数字'); return; }
+                const count = Math.max(1, Math.min(10, rawCount));
+                const results = [];
+                for (let i = 0; i < count; i++) {
+                    const card = drawNormal();
+                    results.push(card);
+                    addRecord('normal', card.displayName === '???' ? card.name : card.displayName);
+                    updateNoTianStreak(card.rarity === 'tian');
+                }
+                state.totalDraws['normal'] += count;
+                const triggered = checkAchievements(results, count === 10);
+                displayDirectResults(results, 'normal', triggered);
+                refreshUI();
+                return;
+            }
+            if (state.currentPool === 'custom' && !state.tianUpHasBeenSet) { showToast('请先在天品自选中设定UP名士'); return; }
+            if (state.currentPool === 'diCustom' && !state.diUpHasBeenSet) { showToast('请先在地品自选中设定UP名士'); return; }
+
+            const results = [];
+            const poolKey = state.currentPool === 'diCustom' ? 'diCustom' : (state.currentPool === 'custom' ? 'custom' : 'advanced');
+            for (let i = 0; i < times; i++) {
+                let card;
+                if (state.currentPool === 'diCustom') { card = drawDiCustom(); }
+                else { card = drawCustomOrAdvanced(); }
+                results.push(card);
+                addRecord(poolKey, card.displayName === '???' ? card.name : card.displayName);
+                updateNoTianStreak(card.rarity === 'tian');
+            }
+            state.totalDraws[poolKey] += times;
+
+            state.pendingDrawResults = results;
+            state.pendingDrawCount = times;
+            state.pendingPool = state.currentPool;
+            const triggered = checkAchievements(results, times === 10);
+            state.currentDrawAchievements = triggered;
+            if (!reuseCat) {
+                state.pendingCatName = catTypes[Math.floor(random() * catTypes.length)];
+            }
+            openCatOverlay(results, times, triggered, reuseCat);
+        }
+
+        function displayDirectResults(results, poolType, triggeredAchievements) {
+            directResultArea.innerHTML = results.map((card, idx) => {
+                let cls = 'result-item';
+                if (poolType === 'spirit') {
+                    cls += ' ' + card.rarity;
+                    let html = '<span class="' + cls + '">' + card.displayName + '</span>';
+                    if (card.rarity === 'jue' && card.exclusive) html += '<span class="exclusive-info">（查看专属）</span>';
+                    return '<div style="display:flex;flex-direction:column;align-items:center;">' + html + '</div>';
+                } else {
+                    if (card.displayName === '???') {
+                        if (card.rarity === 'tian') cls += ' tian-hidden';
+                        else cls += ' di-hidden';
+                        return '<span class="' + cls + '" data-idx="' + idx + '">???</span>';
+                    } else if (card.rarity === 'xuan') { cls += ' xuan'; return '<span class="' + cls + '">' + card.name + '</span>'; }
+                    else { cls += ' huang'; return '<span class="' + cls + '">' + card.name + '</span>'; }
+                }
+            }).join('');
+
+            if (triggeredAchievements && triggeredAchievements.length > 0) {
+                achievementNotification.textContent = '获得成就：' + triggeredAchievements.join('、');
+                achievementNotification.style.display = 'block';
+            } else {
+                achievementNotification.style.display = 'none';
+            }
+
+            if (poolType === 'spirit') {
+                directResultArea.querySelectorAll('.result-item.jue').forEach((el, idx2) => {
+                    const jueCards = results.filter(c => c.rarity === 'jue');
+                    const card = jueCards[idx2];
+                    if (card && card.exclusive) {
+                        el.addEventListener('click', () => {
+                            playClickSound();
+                            showToast(card.exclusive);
+                        });
+                        el.style.cursor = 'pointer';
+                    }
+                });
+            } else {
+                directResultArea.querySelectorAll('.result-item.tian-hidden, .result-item.di-hidden').forEach(el => {
+                    el.addEventListener('click', function() {
+                        playClickSound();
+                        const i = parseInt(this.dataset.idx);
+                        const card = results[i];
+                        this.textContent = card.name;
+                        this.classList.remove('tian-hidden', 'di-hidden');
+                        this.classList.add(card.rarity === 'tian' ? 'tian' : 'di');
+                        this.style.cursor = 'default';
+                    });
+                    el.style.cursor = 'pointer';
+                });
+            }
+        }
+
+        function openCatOverlay(results, count, triggeredAchievements, skipSoul) {
+            catNameDisplay.textContent = state.pendingCatName;
+            catMessage.textContent = '';
+            catCardResults.innerHTML = '';
+            catSoulBtn.style.display = skipSoul ? 'none' : 'inline-block';
+            catExitBtn.style.display = 'inline-block';
+            catAgainBtn.style.display = 'none';
+            catAchievementNotification.style.display = 'none';
+            catOverlay.style.display = 'flex';
+            if (skipSoul) {
+                showCatResults(results, count, triggeredAchievements);
+            }
+        }
+
+        function showCatResults(results, count, triggeredAchievements) {
+            const catName = state.pendingCatName;
+            const pool = state.pendingPool;
+            const hasTian = results.some(c => c.rarity === 'tian');
+            let desc = '一只' + catName + '跳入九泉之井，';
+            if (hasTian && (pool === 'custom' || pool === 'diCustom' || pool === 'advanced')) {
+                desc += '周身散发着耀眼的黄光。';
+            }
+            const countText = count === 1 ? '一张' : (count + '张');
+            desc += '片刻后跳出，带着' + countText + '卡片';
+            catMessage.textContent = desc;
+
+            catCardResults.innerHTML = results.map((card, idx) => {
+                if (card.displayName !== '???') {
+                    let cls = card.rarity === 'xuan' ? 'xuan-card' : 'huang-card';
+                    return '<span class="card-item ' + cls + ' revealed">' + card.name + '</span>';
+                } else {
+                    let cls = card.rarity === 'tian' ? 'tian-card' : 'di-card';
+                    return '<span class="card-item ' + cls + '" data-idx="' + idx + '">???</span>';
+                }
+            }).join('');
+
+            catCardResults.querySelectorAll('.card-item:not(.revealed)').forEach(el => {
+                el.addEventListener('click', function() {
+                    playClickSound();
+                    const i = parseInt(this.dataset.idx);
+                    this.textContent = results[i].name;
+                    this.classList.add('revealed');
+                });
+            });
+
+            if (triggeredAchievements && triggeredAchievements.length > 0) {
+                catAchievementNotification.textContent = '获得成就：' + triggeredAchievements.join('、');
+                catAchievementNotification.style.display = 'block';
+            } else {
+                catAchievementNotification.style.display = 'none';
+            }
+
+            catSoulBtn.style.display = 'none';
+            catAgainBtn.style.display = 'inline-block';
+        }
+
+        // 音效绑定：所有按钮点击
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            // 排除下拉框内部点击（由mousedown处理）
+            if (btn.closest('.dropdown')) return;
+            // 判断是否是重要操作按钮
+            const isMajorAction = btn.id === 'singleDraw' || btn.id === 'tenDraw' || 
+                                   btn.id === 'catSoulBtn' || btn.id === 'catAgainBtn' ||
+                                   btn.id === 'confirmYesBtn' || btn.id === 'enterBtn';
+            if (isMajorAction) {
+                playConfirmSound();
+            } else {
+                playClickSound();
+            }
+        });
+
+        catSoulBtn.addEventListener('click', () => {
+            showCatResults(state.pendingDrawResults, state.pendingDrawCount, state.currentDrawAchievements);
+            refreshUI();
+        });
+
+        catAgainBtn.addEventListener('click', () => {
+            performDraw(state.pendingDrawCount, true);
+        });
+
+        catExitBtn.addEventListener('click', () => {
+            catOverlay.style.display = 'none';
+            refreshUI();
+        });
+
+        recordBtn.addEventListener('click', () => {
+            const poolNames = { custom: '天品自选', diCustom: '地品自选', advanced: '高级卡池', normal: '普通卡池', spirit: '引灵' };
+            recordTitle.textContent = poolNames[state.currentPool] + ' - 抽卡记录';
+            const recs = state.records[state.currentPool] || [];
+            recordList.innerHTML = recs.length === 0 ? '<div style="text-align:center;color:#888;">暂无记录</div>' :
+                recs.map((r, i) => '<div class="record-row"><span>#' + (recs.length - i) + '</span><span>' + r + '</span></div>').join('');
+            recordOverlay.style.display = 'flex';
+        });
+
+        recordCloseBtn.addEventListener('click', () => { recordOverlay.style.display = 'none'; });
+        achievementCloseBtn.addEventListener('click', () => { achievementOverlay.style.display = 'none'; });
+
+        function handleTianUpConfirm() {
+            const tianVal = tianSearchInput.value.trim();
+            const diVal = tianDiSearchInput.value.trim();
+            if (!tianVal || !diVal) { showToast('请选择天卡和地卡UP名士'); return; }
+            if (tianVal === '花木兰') {
+                confirmText.textContent = '是否要选择花木兰作为天品名士up？';
+                confirmOverlay.style.display = 'flex';
+                pendingHuaMulanConfirm = 'tian';
+                return;
+            }
+            if (!tianCards.includes(tianVal) || !diCards.includes(diVal)) { showToast('请输入正确的名士名称！'); return; }
+            state.tianUp.tian = tianVal;
+            state.tianUp.di = diVal;
+            state.tianUp.poolName = tianPoolNames[tianVal] || '天品自选';
+            state.tianUpHasBeenSet = true;
+            refreshUI();
+            showToast('UP名士设定成功：' + state.tianUp.poolName);
+        }
+
+        function handleDiUpConfirm() {
+            const val = diUpSearchInput.value.trim();
+            if (!val) { showToast('请输入地卡名士名称'); return; }
+            if (!diCards.includes(val)) { showToast('请输入正确的名士名称！'); return; }
+            state.diUp.name = val;
+            state.diUp.poolName = diPoolNames[val] || '地品自选';
+            state.diUpHasBeenSet = true;
+            state.diCustomPity.diUpCount = 0;
+            refreshUI();
+            showToast('地品UP名士设定成功：' + state.diUp.poolName);
+        }
+
+        confirmTianUpBtn.addEventListener('click', handleTianUpConfirm);
+        confirmDiUpBtn.addEventListener('click', handleDiUpConfirm);
+
+        confirmYesBtn.addEventListener('click', () => {
+            if (pendingHuaMulanConfirm === 'tian') {
+                const diVal = tianDiSearchInput.value.trim();
+                state.tianUp.tian = '花木兰';
+                state.tianUp.di = diCards.includes(diVal) ? diVal : '地卡';
+                state.tianUp.poolName = '巾帼将相';
+                state.tianUpHasBeenSet = true;
+                if (!state.earnedA[achievementHua.id]) {
+                    state.earnedA[achievementHua.id] = true;
+                    showToast('获得隐藏成就：木兰，行！');
+                }
+            }
+            confirmOverlay.style.display = 'none';
+            pendingHuaMulanConfirm = null;
+            refreshUI();
+        });
+
+        confirmNoBtn.addEventListener('click', () => {
+            confirmOverlay.style.display = 'none';
+            pendingHuaMulanConfirm = null;
+        });
+
+        enterBtn.addEventListener('click', () => {
+            startScreen.style.display = 'none';
+            mainApp.style.display = 'flex';
+            refreshUI();
+        });
+
+        poolButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const pool = e.currentTarget.dataset.pool;
+                state.currentPool = pool;
+                directResultArea.innerHTML = '';
+                achievementNotification.style.display = 'none';
+                if (pool === 'achievement') {
+                    achievementOverlay.style.display = 'flex';
+                    renderAchievementPanel();
+                }
+                refreshUI();
+            });
+        });
+
+        endPoolBtn.addEventListener('click', () => {
+            if (state.currentPool === 'custom') {
+                state.tianPity.tianCount = 0;
+                state.tianUpHasBeenSet = false;
+                state.tianUp.tian = '天卡';
+                state.tianUp.di = '地卡';
+                state.tianUp.poolName = '天品自选';
+            } else if (state.currentPool === 'diCustom') {
+                state.diCustomPity.diUpCount = 0;
+                state.diUpHasBeenSet = false;
+                state.diUp.name = '地卡';
+                state.diUp.poolName = '地品自选';
+            }
+            refreshUI();
+        });
+
+        singleDrawBtn.addEventListener('click', () => performDraw(1, false));
+        tenDrawBtn.addEventListener('click', () => {
+            if (state.currentPool === 'normal') { performDraw(0, false); }
+            else if (state.currentPool === 'spirit') { performDraw(10, false); }
+            else { performDraw(10, false); }
+        });
+
+        refreshUI();
+    })();
+</script>
+</body>
+</html>
